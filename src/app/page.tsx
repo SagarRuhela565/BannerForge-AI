@@ -53,7 +53,7 @@ export default function ImageGenerationPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      resolution: "1:1",
+      resolution: "16:9",
     },
   });
 
@@ -170,7 +170,7 @@ export default function ImageGenerationPage() {
                 src={result.imageUrl}
                 alt="Generated Image"
                 fill
-                className="object-cover"
+                className="object-fill"
               />
             </div>
           )}
