@@ -13,33 +13,31 @@ const formSchema = z.object({
   resolution: z.string(),
 });
 
-const refineFormSchema = formSchema.extend({
-  refinement: z.string().min(5, 'Suggestion must be at least 5 characters.').max(500),
-});
-
 export type BannerResult = {
   imageUrl: string;
   suggestions: string;
 };
 
-// This is a shared utility function to avoid code duplication
-async function generateAndSaveBannerInternal(
-    values: z.infer<typeof formSchema> & { refinement?: string }
-): Promise<BannerResult> {
-    const { description, bannerText, resolution, refinement } = values;
+export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
+    const validatedFields = formSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+        console.error('Invalid input fields for generate:', validatedFields.error);
+        throw new Error('Invalid input.');
+    }
+
+    const { description, bannerText, resolution } = validatedFields.data;
 
     console.log('Starting banner generation process with input:', values);
 
     try {
-        const suggestionsResult = await generateSuggestions({ description, bannerText, refinement });
+        const suggestionsResult = await generateSuggestions({ description, bannerText });
         if (!suggestionsResult || !suggestionsResult.improvementSuggestions) {
             throw new Error('Failed to generate suggestions.');
         }
         console.log('Suggestions generated.');
 
-        const imagePrompt = `Create a high-quality banner image with the text "${bannerText}". The style should be: "${description}". ${
-            refinement ? `Refinement suggestion: "${refinement}".` : ''
-        } The resolution must be ${resolution}.`;
+        const imagePrompt = `Create a high-quality banner image with the text "${bannerText}". The style should be: "${description}". The resolution must be ${resolution}.`;
 
         const { media } = await ai.generate({
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
@@ -65,7 +63,6 @@ async function generateAndSaveBannerInternal(
                 imageUrl: bannerImageUrl,
                 suggestions: bannerSuggestions,
                 createdAt: serverTimestamp(),
-                refinement: refinement || null,
             });
             console.log("Banner saved to Firestore");
         } catch (error) {
@@ -85,27 +82,3 @@ async function generateAndSaveBannerInternal(
         throw new Error('Failed to generate banner due to a server error.');
     }
 }
-
-
-export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
-  const validatedFields = formSchema.safeParse(values);
-
-  if (!validatedFields.success) {
-      console.error('Invalid input fields for generate:', validatedFields.error);
-      throw new Error('Invalid input.');
-  }
-  
-  return generateAndSaveBannerInternal(validatedFields.data);
-}
-
-export async function refineAndSaveBanner(values: z.infer<typeof refineFormSchema>): Promise<BannerResult> {
-  const validatedFields = refineFormSchema.safeParse(values);
-
-  if (!validatedFields.success) {
-    console.error('Invalid input fields for refine:', validatedFields.error);
-    throw new Error('Invalid input for refinement.');
-  }
-
-  return generateAndSaveBannerInternal(validatedFields.data);
-}
-

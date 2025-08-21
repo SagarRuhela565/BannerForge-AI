@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, Image as ImageIcon, Lightbulb, Loader2, Library, Send } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Lightbulb, Loader2, Library } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { generateAndSaveBanner, refineAndSaveBanner } from "@/lib/actions";
+import { generateAndSaveBanner } from "@/lib/actions";
 
 const formSchema = z.object({
   description: z.string().min(10, {
@@ -47,14 +47,6 @@ const formSchema = z.object({
   }),
 });
 
-const refineFormSchema = z.object({
-  refinement: z.string().min(5, {
-    message: "Suggestion must be at least 5 characters.",
-  }).max(500, {
-    message: "Suggestion must not be longer than 500 characters."
-  }),
-});
-
 type BannerFormValues = z.infer<typeof formSchema>;
 
 type BannerResult = {
@@ -64,9 +56,7 @@ type BannerResult = {
 
 export default function BannerForgePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isRefining, setIsRefining] = useState(false);
   const [result, setResult] = useState<BannerResult | null>(null);
-  const [currentBannerRequest, setCurrentBannerRequest] = useState<BannerFormValues | null>(null);
   const { toast } = useToast();
 
   const form = useForm<BannerFormValues>({
@@ -78,17 +68,9 @@ export default function BannerForgePage() {
     },
   });
 
-  const refineForm = useForm<z.infer<typeof refineFormSchema>>({
-    resolver: zodResolver(refineFormSchema),
-    defaultValues: {
-      refinement: "",
-    },
-  });
-
   async function onSubmit(values: BannerFormValues) {
     setIsLoading(true);
     setResult(null);
-    setCurrentBannerRequest(values);
     try {
       const bannerResult = await generateAndSaveBanner(values);
       setResult(bannerResult);
@@ -102,30 +84,6 @@ export default function BannerForgePage() {
       });
     } finally {
       setIsLoading(false);
-    }
-  }
-
-  async function handleRefine(values: z.infer<typeof refineFormSchema>) {
-    if (!currentBannerRequest) return;
-
-    setIsRefining(true);
-    try {
-      const bannerResult = await refineAndSaveBanner({
-        ...currentBannerRequest,
-        refinement: values.refinement,
-      });
-      setResult(bannerResult);
-      refineForm.reset();
-    } catch (error) {
-      console.error("Error during banner refinement:", error);
-      const errorMessage = error instanceof Error ? error.message : "There was a problem with your request. Please try again.";
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: errorMessage,
-      });
-    } finally {
-      setIsRefining(false);
     }
   }
 
@@ -220,7 +178,7 @@ export default function BannerForgePage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isLoading || isRefining} className="w-full">
+                <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -239,7 +197,7 @@ export default function BannerForgePage() {
         </Card>
 
         <div className="space-y-8">
-          {(isLoading || isRefining) && (
+          {isLoading && (
             <Card>
               <CardHeader>
                 <CardTitle className="font-headline text-2xl">Generating...</CardTitle>
@@ -251,7 +209,7 @@ export default function BannerForgePage() {
             </Card>
           )}
 
-          {result && !isLoading && !isRefining && (
+          {result && !isLoading && (
             <div className="space-y-8 animate-in fade-in duration-500">
               <Card>
                 <CardHeader>
@@ -284,53 +242,6 @@ export default function BannerForgePage() {
                   <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap font-body">
                     {result.suggestions}
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                    <Sparkles className="w-6 h-6 text-primary" />
-                    Refine Your Banner
-                  </CardTitle>
-                  <CardDescription>
-                    Suggest a change to the banner and our AI will create a new version.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...refineForm}>
-                    <form onSubmit={refineForm.handleSubmit(handleRefine)} className="space-y-4">
-                      <FormField
-                        control={refineForm.control}
-                        name="refinement"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Textarea
-                                placeholder="e.g., Make the background color darker, use a different font for the text."
-                                className="resize-y"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" disabled={isRefining} className="w-full">
-                        {isRefining ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Refining...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="mr-2 h-4 w-4" />
-                            Refine Banner
-                          </>
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
                 </CardContent>
               </Card>
             </div>

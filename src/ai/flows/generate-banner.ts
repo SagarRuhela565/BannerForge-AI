@@ -15,7 +15,6 @@ import {z} from 'genkit';
 const GenerateSuggestionsInputSchema = z.object({
   description: z.string().describe('A detailed description of the banner style.'),
   bannerText: z.string().describe('The specific text to be displayed on the banner.'),
-  refinement: z.string().optional().describe('An optional suggestion for how to change or refine the previously generated banner.'),
 });
 export type GenerateSuggestionsInput = z.infer<typeof GenerateSuggestionsInputSchema>;
 
@@ -43,12 +42,10 @@ const suggestionsPrompt = ai.definePrompt({
       **Request Details:**
       - **Style Description:** "{{description}}"
       - **Banner Text:** "{{bannerText}}"
-      {{#if refinement}}- **Refinement Request:** "{{refinement}}"{{/if}}
 
       **Instructions:**
       1.  **Provide Suggestions:** Provide 3-4 actionable suggestions for improving a banner with the above details. Focus on aspects like layout, color harmony, typography, and imagery.
-      {{#if refinement}}2. **Address Refinement:** Make sure your suggestions directly address the user's refinement request.{{/if}}
-      3.  **Format Output:** Present the suggestions as a bulleted or numbered list.
+      2.  **Format Output:** Present the suggestions as a bulleted or numbered list.
       `,
 });
 
