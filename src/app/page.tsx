@@ -124,13 +124,21 @@ export default function BannerForgePage() {
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
-      <div className="text-center mb-12">
-        <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-500 to-accent text-transparent bg-clip-text">
-          BannerForge AI
-        </h1>
-        <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
-          Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals and expert suggestions.
-        </p>
+      <div className="flex items-center justify-between mb-12">
+        <div className="text-center w-full">
+          <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-500 to-accent text-transparent bg-clip-text">
+            BannerForge AI
+          </h1>
+          <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
+            Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals and expert suggestions.
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/gallery">
+            <Library />
+            View Gallery
+          </Link>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
