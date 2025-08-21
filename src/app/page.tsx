@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -5,7 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import { Sparkles, Image as ImageIcon, Lightbulb, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, Image as ImageIcon, Lightbulb, Loader2, Library } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -89,6 +91,14 @@ export default function BannerForgePage() {
         <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
           Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals and expert suggestions.
         </p>
+         <div className="mt-6">
+          <Button asChild>
+            <Link href="/gallery">
+              <Library className="mr-2 h-4 w-4" />
+              View Gallery
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
