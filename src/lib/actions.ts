@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { generateBanner } from '@/ai/flows/generate-banner';
+import { testApiKey } from '@/ai/flows/api-test';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -16,11 +17,16 @@ export type BannerResult = {
   suggestions: string;
 };
 
-async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiKey: string | undefined): Promise<BannerResult | null> {
-  if (!apiKey) {
-    return null;
-  }
+async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiKey: string): Promise<BannerResult | null> {
   try {
+    const testResult = await testApiKey({ apiKey });
+    if (!testResult.ok) {
+        console.warn(`API key test failed for a key. Trying next key.`);
+        return null;
+    }
+
+    console.log("API Key is valid, proceeding with banner generation.");
+
     const result = await generateBanner({
       description: values.description,
       bannerText: values.bannerText,
@@ -37,7 +43,7 @@ async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiK
       suggestions: result.improvementSuggestions,
     };
   } catch (error) {
-    console.warn(`API key failed. Trying next key.`);
+    console.warn(`Banner generation failed with a key. Trying next key.`, error);
     return null;
   }
 }
@@ -69,7 +75,7 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
   }
 
   if (!bannerResult) {
-    throw new Error('All API keys failed. Please check your keys and try again.');
+    throw new Error('All API keys failed or are invalid. Please check your keys and try again.');
   }
 
   try {
