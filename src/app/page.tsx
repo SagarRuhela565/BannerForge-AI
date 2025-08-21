@@ -17,13 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -32,9 +25,6 @@ import { generateImage } from "@/lib/actions";
 const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
-  }),
-  aspectRatio: z.string({
-    required_error: "Please select an aspect ratio.",
   }),
 });
 
@@ -53,7 +43,6 @@ export default function ImageGenerationPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      aspectRatio: "16:9",
     },
   });
 
@@ -63,7 +52,6 @@ export default function ImageGenerationPage() {
     try {
       const generationResult = await generateImage({
         prompt: values.prompt,
-        aspectRatio: values.aspectRatio,
       });
       setResult(generationResult);
     } catch (error) {
@@ -118,28 +106,6 @@ export default function ImageGenerationPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="aspectRatio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Aspect Ratio</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select an aspect ratio" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1:1">Square (1:1)</SelectItem>
-                          <SelectItem value="16:9">Landscape (16:9)</SelectItem>
-                          <SelectItem value="9:16">Portrait (9:16)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? (
                     <>
@@ -158,7 +124,7 @@ export default function ImageGenerationPage() {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center p-4 border rounded-lg">
           {isLoading && (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -172,9 +138,15 @@ export default function ImageGenerationPage() {
               src={result.imageUrl}
               alt="Generated Image"
               width={1024}
-              height={576}
+              height={1024}
               className="relative w-full h-auto rounded-lg border object-cover"
             />
+          )}
+
+          {!isLoading && !result && (
+             <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+                <p>Your generated image will appear here.</p>
+             </div>
           )}
         </div>
       </div>

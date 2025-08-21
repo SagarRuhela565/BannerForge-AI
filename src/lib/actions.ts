@@ -8,7 +8,6 @@ const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
   }),
-  aspectRatio: z.string(),
 });
 
 export type GenerationResult = {
@@ -22,10 +21,10 @@ export async function generateImage(values: z.infer<typeof formSchema>): Promise
     throw new Error('Invalid input provided.');
   }
 
-  const { prompt, aspectRatio } = validatedFields.data;
+  const { prompt } = validatedFields.data;
 
   try {
-    const flowInput: GenerateImageInput = { prompt, aspectRatio };
+    const flowInput: GenerateImageInput = { prompt };
     const imageUrl = await generateImageFlow(flowInput);
 
     if (!imageUrl) {
