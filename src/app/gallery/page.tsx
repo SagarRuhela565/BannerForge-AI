@@ -96,8 +96,8 @@ export default function GalleryPage() {
                   <Image
                     src={banner.imageUrl}
                     alt={banner.bannerText}
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
                  <div className="p-4">

@@ -83,6 +83,6 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
   } catch (error) {
     console.error(`Fatal error during banner generation flow:`, error);
     // Re-throw a user-friendly error to be caught by the client.
-    throw new Error('An unexpected error occurred on the server during banner generation.');
+    throw new Error('Failed to generate banner due to a server error. Please check the logs.');
   }
 }

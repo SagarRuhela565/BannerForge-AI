@@ -223,8 +223,8 @@ export default function BannerForgePage() {
                     <Image
                       src={result.imageUrl}
                       alt="Generated Banner"
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      className="object-cover"
                       data-ai-hint="banner design"
                     />
                   </div>
