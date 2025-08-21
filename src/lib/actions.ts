@@ -2,9 +2,10 @@
 'use server';
 
 import { z } from 'zod';
-import { generateBanner } from '@/ai/flows/generate-banner';
+import { generateSuggestions } from '@/ai/flows/generate-banner';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ai } from '@/ai/genkit';
 
 const formSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters.').max(500),
@@ -29,29 +30,44 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
   
   const { description, bannerText, resolution } = validatedFields.data;
   
-  console.log('Input validated. Calling generateBanner flow...');
+  console.log('Input validated. Generating banner and suggestions...');
 
   try {
-      const bannerResult = await generateBanner({
-        description,
-        bannerText,
-        resolution
+      // Step 1: Generate suggestions using the reliable text model.
+      const suggestionsResult = await generateSuggestions({ description, bannerText });
+      if (!suggestionsResult || !suggestionsResult.improvementSuggestions) {
+          throw new Error('Failed to generate suggestions.');
+      }
+      console.log('Suggestions generated.');
+
+      // Step 2: Generate the image using the dedicated image model.
+      const imagePrompt = `Create a high-quality banner image with the text "${bannerText}". The style should be: "${description}". The resolution must be ${resolution}.`;
+      
+      const { media } = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: imagePrompt,
+        config: {
+            responseModalities: ['IMAGE'],
+        },
       });
 
-      if (!bannerResult || !bannerResult.bannerImage) {
-        console.error('Banner generation returned an empty result.');
-        throw new Error('Banner generation failed.');
+      if (!media || !media.url) {
+        throw new Error('Image generation failed to produce an output.');
       }
+      console.log('Image generated.');
+
+      const bannerImageUrl = media.url;
+      const bannerSuggestions = suggestionsResult.improvementSuggestions;
       
-      console.log("Banner generated successfully. Saving to Firestore...");
-      
+      // Step 3: Save to Firestore
+      console.log("Saving to Firestore...");
       try {
         const bannerData = {
           description,
           bannerText,
           resolution,
-          imageUrl: bannerResult.bannerImage,
-          suggestions: bannerResult.improvementSuggestions,
+          imageUrl: bannerImageUrl,
+          suggestions: bannerSuggestions,
           createdAt: serverTimestamp(),
         };
         await addDoc(collection(db, 'banners'), bannerData);
@@ -62,8 +78,8 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
       }
       
       return {
-          imageUrl: bannerResult.bannerImage,
-          suggestions: bannerResult.improvementSuggestions,
+          imageUrl: bannerImageUrl,
+          suggestions: bannerSuggestions,
       };
 
   } catch (error) {
