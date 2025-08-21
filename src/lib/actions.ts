@@ -16,6 +16,32 @@ export type BannerResult = {
   suggestions: string;
 };
 
+async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiKey: string | undefined): Promise<BannerResult | null> {
+  if (!apiKey) {
+    return null;
+  }
+  try {
+    const result = await generateBanner({
+      description: values.description,
+      bannerText: values.bannerText,
+      resolution: values.resolution,
+    }, { apiKey });
+
+    if (!result.bannerImage) {
+      console.error('Failed to generate banner image with a key.');
+      return null;
+    }
+    
+    return {
+      imageUrl: result.bannerImage,
+      suggestions: result.improvementSuggestions,
+    };
+  } catch (error) {
+    console.warn(`API key failed. Trying next key.`);
+    return null;
+  }
+}
+
 export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
   const validatedFields = formSchema.safeParse(values);
 
@@ -25,35 +51,40 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
 
   const { description, bannerText, resolution } = validatedFields.data;
 
-  try {
-    const result = await generateBanner({
-      description,
-      bannerText,
-      resolution,
-    });
+  const apiKeys = [
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+  ];
 
-    if (!result.bannerImage) {
-      throw new Error('Failed to generate banner image.');
+  let bannerResult: BannerResult | null = null;
+
+  for (const key of apiKeys) {
+    bannerResult = await tryGenerateBannerWithKey(validatedFields.data, key);
+    if (bannerResult) {
+      break; 
     }
+  }
 
+  if (!bannerResult) {
+    throw new Error('All API keys failed. Please check your keys and try again.');
+  }
+
+  try {
     const bannerData = {
       description,
       bannerText,
       resolution,
-      imageUrl: result.bannerImage,
-      suggestions: result.improvementSuggestions,
+      imageUrl: bannerResult.imageUrl,
+      suggestions: bannerResult.suggestions,
       createdAt: serverTimestamp(),
     };
 
     await addDoc(collection(db, 'banners'), bannerData);
     
-    return {
-      imageUrl: result.bannerImage,
-      suggestions: result.improvementSuggestions,
-    };
+    return bannerResult;
   } catch (error) {
-    console.error('Error in generateAndSaveBanner:', error);
-    // It's better to throw a more generic error to the client
-    throw new Error('An error occurred while generating the banner. Please try again.');
+    console.error('Error saving banner to Firestore:', error);
+    throw new Error('An error occurred while saving the banner. Please try again.');
   }
 }

@@ -8,7 +8,8 @@
  * - GenerateBannerOutput - The return type for the generateBanner function.
  */
 
-import {ai} from '@/ai/genkit';
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const GenerateBannerInputSchema = z.object({
@@ -28,20 +29,27 @@ const GenerateBannerOutputSchema = z.object({
 
 export type GenerateBannerOutput = z.infer<typeof GenerateBannerOutputSchema>;
 
-export async function generateBanner(input: GenerateBannerInput): Promise<GenerateBannerOutput> {
-  return generateBannerFlow(input);
+type FlowOptions = {
+    apiKey?: string;
 }
 
-const improveBannerPrompt = ai.definePrompt({
-  name: 'improveBannerPrompt',
-  input: {schema: z.object({
-    description: GenerateBannerInputSchema.shape.description,
-    bannerText: GenerateBannerInputSchema.shape.bannerText,
-    resolution: GenerateBannerInputSchema.shape.resolution,
-    bannerImage: GenerateBannerOutputSchema.shape.bannerImage,
-  })},
-  output: {schema: z.object({improvementSuggestions: z.string()})},
-  prompt: `You are an expert consultant on how to improve banners. Given the generated banner and the original description, what suggestions do you have to improve it?
+export async function generateBanner(input: GenerateBannerInput, options?: FlowOptions): Promise<GenerateBannerOutput> {
+  const ai = genkit({
+    plugins: [
+        googleAI({apiKey: options?.apiKey})
+    ]
+  });
+
+  const improveBannerPrompt = ai.definePrompt({
+    name: 'improveBannerPrompt',
+    input: {schema: z.object({
+      description: GenerateBannerInputSchema.shape.description,
+      bannerText: GenerateBannerInputSchema.shape.bannerText,
+      resolution: GenerateBannerInputSchema.shape.resolution,
+      bannerImage: GenerateBannerOutputSchema.shape.bannerImage,
+    })},
+    output: {schema: z.object({improvementSuggestions: z.string()})},
+    prompt: `You are an expert consultant on how to improve banners. Given the generated banner and the original description, what suggestions do you have to improve it?
 
 Description: {{{description}}}
 Text: {{{bannerText}}}
@@ -49,41 +57,44 @@ Resolution: {{{resolution}}}
 Generated Banner: {{media url=bannerImage}}
 
 Suggestions:`, 
-})
+  })
 
-const generateBannerFlow = ai.defineFlow(
-  {
-    name: 'generateBannerFlow',
-    inputSchema: GenerateBannerInputSchema,
-    outputSchema: GenerateBannerOutputSchema,
-  },
-  async input => {
-    // Generate the banner image
-    const {media} = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate a banner image with the following description: "${input.description}", with the text "${input.bannerText}" prominently displayed. The resolution should be ${input.resolution}.`,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
+  const generateBannerFlow = ai.defineFlow(
+    {
+      name: 'generateBannerFlow',
+      inputSchema: GenerateBannerInputSchema,
+      outputSchema: GenerateBannerOutputSchema,
+    },
+    async input => {
+      // Generate the banner image
+      const {media} = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: `Generate a banner image with the following description: "${input.description}", with the text "${input.bannerText}" prominently displayed. The resolution should be ${input.resolution}.`,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
 
-    if (!media?.url) {
-      throw new Error('Failed to generate banner image.');
-    }
+      if (!media?.url) {
+        throw new Error('Failed to generate banner image.');
+      }
 
-    const {output: improvementOutput} = await improveBannerPrompt({
+      const {output: improvementOutput} = await improveBannerPrompt({
+          bannerImage: media.url,
+          description: input.description,
+          bannerText: input.bannerText,
+          resolution: input.resolution,
+      })
+
+      // Update the output with the improvement suggestions
+      const finalOutput: GenerateBannerOutput = {
         bannerImage: media.url,
-        description: input.description,
-        bannerText: input.bannerText,
-        resolution: input.resolution,
-    })
+        improvementSuggestions: improvementOutput!.improvementSuggestions,
+      };
 
-    // Update the output with the improvement suggestions
-    const finalOutput: GenerateBannerOutput = {
-      bannerImage: media.url,
-      improvementSuggestions: improvementOutput!.improvementSuggestions,
-    };
+      return finalOutput;
+    }
+  );
 
-    return finalOutput;
-  }
-);
+  return generateBannerFlow(input);
+}
