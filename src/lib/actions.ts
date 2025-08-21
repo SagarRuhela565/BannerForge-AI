@@ -60,9 +60,11 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
   let bannerResult: BannerResult | null = null;
 
   for (const key of apiKeys) {
-    bannerResult = await tryGenerateBannerWithKey(validatedFields.data, key);
-    if (bannerResult) {
-      break; 
+    if (key) {
+        bannerResult = await tryGenerateBannerWithKey(validatedFields.data, key);
+        if (bannerResult) {
+          break; 
+        }
     }
   }
 

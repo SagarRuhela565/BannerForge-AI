@@ -65,8 +65,7 @@ Suggestions:`,
       inputSchema: GenerateBannerInputSchema,
       outputSchema: GenerateBannerOutputSchema,
     },
-    async input => {
-      // Generate the banner image
+    async (input) => {
       const {media} = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         prompt: `Generate a banner image with the following description: "${input.description}", with the text "${input.bannerText}" prominently displayed. The resolution should be ${input.resolution}.`,
@@ -81,12 +80,9 @@ Suggestions:`,
 
       const {output: improvementOutput} = await improveBannerPrompt({
           bannerImage: media.url,
-          description: input.description,
-          bannerText: input.bannerText,
-          resolution: input.resolution,
+          ...input,
       })
 
-      // Update the output with the improvement suggestions
       const finalOutput: GenerateBannerOutput = {
         bannerImage: media.url,
         improvementSuggestions: improvementOutput!.improvementSuggestions,
