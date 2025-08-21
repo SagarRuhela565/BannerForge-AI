@@ -32,6 +32,7 @@ const formSchema = z.object({
   }),
   bannerText: z.string().optional(),
   images: z.array(z.string()).optional(),
+  logo: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -44,6 +45,7 @@ export default function ImageGenerationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -52,6 +54,7 @@ export default function ImageGenerationPage() {
       prompt: "",
       bannerText: "",
       images: [],
+      logo: "",
     },
   });
 
@@ -99,6 +102,30 @@ export default function ImageGenerationPage() {
     // Reset file input
     event.target.value = '';
   };
+  
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: `The logo file must be less than 4MB.`,
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setLogoPreview(dataUrl);
+      form.setValue("logo", dataUrl);
+    };
+    reader.readAsDataURL(file);
+
+    event.target.value = '';
+  };
 
   const removeImage = (index: number) => {
     const newPreviews = [...imagePreviews];
@@ -110,6 +137,11 @@ export default function ImageGenerationPage() {
     setImagePreviews(newPreviews);
     form.setValue("images", newImageData);
   };
+  
+  const removeLogo = () => {
+    setLogoPreview(null);
+    form.setValue("logo", "");
+  }
 
   const handleDownload = async (url: string) => {
     try {
@@ -141,6 +173,7 @@ export default function ImageGenerationPage() {
         prompt: values.prompt,
         bannerText: values.bannerText,
         images: values.images,
+        logo: values.logo,
       });
       setResult(generationResult);
     } catch (error) {
@@ -166,7 +199,7 @@ export default function ImageGenerationPage() {
           AI Banner Generator
         </h1>
         <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
-          Describe the banner you want to create. Upload up to 3 reference images for inspiration. We'll generate 3 options for you!
+          Describe the banner you want to create. Upload a logo and reference images for inspiration. We'll generate 3 options for you!
         </p>
       </div>
 
@@ -218,6 +251,58 @@ export default function ImageGenerationPage() {
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={form.control}
+                  name="logo"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Base Logo (Optional)</FormLabel>
+                      <FormControl>
+                        <div className="relative border-dashed border-2 border-muted rounded-lg p-4 text-center">
+                          <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Click to upload logo
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            1 image, 4MB max.
+                          </p>
+                          <Input
+                            type="file"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            accept="image/png, image/jpeg, image/webp"
+                            onChange={handleLogoChange}
+                            disabled={!!logoPreview}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {logoPreview && (
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="relative group">
+                      <Image
+                        src={logoPreview}
+                        alt="Logo preview"
+                        width={100}
+                        height={100}
+                        className="w-full h-auto object-cover rounded-md"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={removeLogo}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <FormField
                   control={form.control}

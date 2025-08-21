@@ -10,6 +10,7 @@ const formSchema = z.object({
   }),
   bannerText: z.string().optional(),
   images: z.array(z.string()).optional(),
+  logo: z.string().optional(),
 });
 
 export type GenerationResult = {
@@ -23,10 +24,10 @@ export async function generateImage(values: z.infer<typeof formSchema>): Promise
     throw new Error('Invalid input provided.');
   }
 
-  const { prompt, bannerText, images } = validatedFields.data;
+  const { prompt, bannerText, images, logo } = validatedFields.data;
 
   try {
-    const flowInput: GenerateImageInput = { prompt, bannerText, images };
+    const flowInput: GenerateImageInput = { prompt, bannerText, images, logo };
     const imageUrls = await generateImageFlow(flowInput);
 
     if (!imageUrls || imageUrls.length === 0) {
