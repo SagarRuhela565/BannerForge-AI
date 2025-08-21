@@ -5,31 +5,26 @@ import { z } from 'zod';
 import { ai } from '@/ai/genkit';
 
 const formSchema = z.object({
-  description: z.string().min(10).max(500),
-  bannerText: z.string().min(1).max(100),
-  resolution: z.string(),
+  prompt: z.string().min(10),
 });
 
-export type BannerResult = {
+export type GenerationResult = {
   imageUrl: string;
 };
 
-export async function generateBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
+export async function generateImage(values: z.infer<typeof formSchema>): Promise<GenerationResult> {
   const validatedFields = formSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    console.error('Invalid input fields for banner generation:', validatedFields.error);
     throw new Error('Invalid input provided.');
   }
 
-  const { description, bannerText, resolution } = validatedFields.data;
+  const { prompt } = validatedFields.data;
 
   try {
-    const imagePrompt = `Create a high-quality banner with the text "${bannerText}". The desired style is: "${description}". The resolution must be ${resolution}.`;
-
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: imagePrompt,
+      prompt: prompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },
@@ -38,14 +33,13 @@ export async function generateBanner(values: z.infer<typeof formSchema>): Promis
     if (!media || !media.url) {
       throw new Error('Image generation failed to produce an output.');
     }
-    const bannerImageUrl = media.url;
 
     return {
-      imageUrl: bannerImageUrl,
+      imageUrl: media.url,
     };
 
   } catch (error) {
-    console.error(`Fatal error during banner generation flow:`, error);
-    throw new Error('Failed to generate banner due to a server error. Please check the logs.');
+    console.error(`Fatal error during image generation:`, error);
+    throw new Error('Failed to generate image due to a server error.');
   }
 }

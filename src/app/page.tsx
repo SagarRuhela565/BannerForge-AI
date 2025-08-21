@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import { Sparkles, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,61 +18,42 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { generateBanner } from "@/lib/actions";
+import { generateImage } from "@/lib/actions";
 
 const formSchema = z.object({
-  description: z.string().min(10, {
-    message: "Description must be at least 10 characters.",
-  }).max(500, {
-    message: "Description must not be longer than 500 characters."
-  }),
-  bannerText: z.string().min(1, {
-    message: "Banner text is required.",
-  }).max(100, {
-    message: "Banner text must not be longer than 100 characters."
-  }),
-  resolution: z.string({
-    required_error: "Please select a resolution.",
+  prompt: z.string().min(10, {
+    message: "Prompt must be at least 10 characters.",
   }),
 });
 
-type BannerFormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>;
 
-type BannerResult = {
+type GenerationResult = {
   imageUrl: string;
 };
 
-export default function BannerForgePage() {
+export default function ImageGenerationPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<BannerResult | null>(null);
+  const [result, setResult] = useState<GenerationResult | null>(null);
   const { toast } = useToast();
 
-  const form = useForm<BannerFormValues>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      description: "",
-      bannerText: "",
-      resolution: "1920x1080",
+      prompt: "",
     },
   });
 
-  async function onSubmit(values: BannerFormValues) {
+  async function onSubmit(values: FormValues) {
     setIsLoading(true);
     setResult(null);
     try {
-      const bannerResult = await generateBanner(values);
-      setResult(bannerResult);
+      const generationResult = await generateImage(values);
+      setResult(generationResult);
     } catch (error) {
-      console.error("Error during banner generation:", error);
+      console.error("Error during image generation:", error);
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
       toast({
         variant: "destructive",
@@ -86,15 +67,13 @@ export default function BannerForgePage() {
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
-      <div className="flex items-start justify-between mb-12">
-        <div className="text-center w-full">
-          <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-500 to-accent text-transparent bg-clip-text">
-            BannerForge AI
-          </h1>
-          <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
-            Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals.
-          </p>
-        </div>
+      <div className="text-center w-full mb-12">
+        <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight">
+          Text-to-Image Generation
+        </h1>
+        <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
+          Describe the image you want to create.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
@@ -102,69 +81,25 @@ export default function BannerForgePage() {
           <CardHeader>
             <CardTitle className="font-headline text-2xl flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-primary" />
-              Create Your Banner
+              Create Your Image
             </CardTitle>
-            <CardDescription className="font-body">
-              Fill out the details below to generate your custom banner.
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="prompt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Banner Style Description</FormLabel>
+                      <FormLabel>Image Prompt</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., A minimalist design with a pastel color palette, geometric shapes, and a futuristic feel."
+                          placeholder="e.g., A majestic lion wearing a crown, photorealistic, 4k"
                           className="resize-y min-h-[100px]"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bannerText"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Banner Text</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="e.g., Grand Opening Sale"
-                          className="resize-y"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="resolution"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Resolution</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a resolution" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1920x1080">1920x1080 (16:9)</SelectItem>
-                          <SelectItem value="1280x720">1280x720 (16:9)</SelectItem>
-                          <SelectItem value="1080x1080">1080x1080 (1:1)</SelectItem>
-                          <SelectItem value="1080x1350">1080x1350 (4:5)</SelectItem>
-                          <SelectItem value="1200x628">1200x628 (Facebook)</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -178,7 +113,7 @@ export default function BannerForgePage() {
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Forge Banner
+                      Generate Image
                     </>
                   )}
                 </Button>
@@ -187,40 +122,23 @@ export default function BannerForgePage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-8">
+        <div className="flex items-center justify-center">
           {isLoading && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-headline text-2xl">Generating...</CardTitle>
-                <CardDescription>Our AI is crafting your masterpiece. Please wait.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex items-center justify-center p-12">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center p-12 text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-lg font-medium">Generating your image...</p>
+              <p className="text-sm text-muted-foreground">This may take a moment.</p>
+            </div>
           )}
 
           {result && !isLoading && (
-            <div className="space-y-8 animate-in fade-in duration-500">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                    <ImageIcon className="w-6 h-6 text-primary" />
-                    Your Banner
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-video relative w-full overflow-hidden rounded-lg border">
-                    <Image
-                      src={result.imageUrl}
-                      alt="Generated Banner"
-                      fill
-                      className="object-cover"
-                      data-ai-hint="banner design"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="w-full aspect-video relative overflow-hidden rounded-lg border">
+              <Image
+                src={result.imageUrl}
+                alt="Generated Image"
+                fill
+                className="object-cover"
+              />
             </div>
           )}
         </div>
