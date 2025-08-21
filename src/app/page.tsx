@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, Image as ImageIcon, Lightbulb, Loader2, Library } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Loader2, Library } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +51,6 @@ type BannerFormValues = z.infer<typeof formSchema>;
 
 type BannerResult = {
   imageUrl: string;
-  suggestions: string;
 };
 
 export default function BannerForgePage() {
@@ -95,7 +94,7 @@ export default function BannerForgePage() {
             BannerForge AI
           </h1>
           <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
-            Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals and expert suggestions.
+            Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals.
           </p>
         </div>
          <Button asChild variant="outline">
@@ -227,20 +226,6 @@ export default function BannerForgePage() {
                       className="object-cover"
                       data-ai-hint="banner design"
                     />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                    <Lightbulb className="w-6 h-6 text-primary" />
-                    Improvement Suggestions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap font-body">
-                    {result.suggestions}
                   </div>
                 </CardContent>
               </Card>

@@ -14,7 +14,6 @@ const formSchema = z.object({
 
 export type BannerResult = {
   imageUrl: string;
-  suggestions: string;
 };
 
 export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
@@ -29,7 +28,6 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
 
   try {
     const imagePrompt = `Create a high-quality banner with the text "${bannerText}". The desired style is: "${description}". The resolution must be ${resolution}.`;
-    const bannerSuggestions = "Design suggestions feature is currently under development.";
 
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
@@ -44,22 +42,23 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
     }
     const bannerImageUrl = media.url;
 
+    // Save to Firestore without suggestions
     try {
       await addDoc(collection(db, "banners"), {
         description,
         bannerText,
         resolution,
         imageUrl: bannerImageUrl,
-        suggestions: bannerSuggestions,
         createdAt: serverTimestamp(),
       });
     } catch (error) {
       console.error("Error saving banner to Firestore:", error);
+      // We don't throw here, as the image was generated successfully.
+      // The user can still see the result.
     }
 
     return {
       imageUrl: bannerImageUrl,
-      suggestions: bannerSuggestions,
     };
 
   } catch (error) {

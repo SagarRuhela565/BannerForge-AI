@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
@@ -16,7 +16,6 @@ type Banner = {
   bannerText: string;
   resolution: string;
   imageUrl: string;
-  suggestions: string;
   createdAt: any;
 };
 
