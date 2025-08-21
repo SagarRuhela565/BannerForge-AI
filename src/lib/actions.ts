@@ -2,10 +2,12 @@
 'use server';
 
 import { z } from 'zod';
-import { ai } from '@/ai/genkit';
+import { generateImage as generateImageFlow, GenerateImageInput } from '@/ai/flows/generate-image';
 
 const formSchema = z.object({
-  prompt: z.string().min(10),
+  prompt: z.string().min(10, {
+    message: "Prompt must be at least 10 characters.",
+  }),
 });
 
 export type GenerationResult = {
@@ -22,20 +24,15 @@ export async function generateImage(values: z.infer<typeof formSchema>): Promise
   const { prompt } = validatedFields.data;
 
   try {
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
-      prompt: prompt,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
+    const flowInput: GenerateImageInput = { prompt };
+    const imageUrl = await generateImageFlow(flowInput);
 
-    if (!media || !media.url) {
+    if (!imageUrl) {
       throw new Error('Image generation failed to produce an output.');
     }
 
     return {
-      imageUrl: media.url,
+      imageUrl: imageUrl,
     };
 
   } catch (error) {

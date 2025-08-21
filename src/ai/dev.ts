@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
 config();
 
-// No flows are defined for this simple version.
+// Import flows so that they are registered with Genkit.
+import './flows/generate-image';
