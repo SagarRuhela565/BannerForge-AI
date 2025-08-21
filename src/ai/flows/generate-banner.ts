@@ -45,7 +45,7 @@ const suggestionsPrompt = ai.definePrompt({
 
       **Instructions:**
       1.  **Provide Suggestions:** Provide 3-4 actionable suggestions for improving a banner with the above details. Focus on aspects like layout, color harmony, typography, and imagery.
-      2.  **Format Output:** Present the suggestions as a bulleted or numbered list.
+      2.  **Format Output:** Present the suggestions as a bulleted or numbered list. Your response must only contain the list.
       `,
 });
 

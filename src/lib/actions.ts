@@ -41,7 +41,7 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
 
     // Step 3: Generate the image.
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      model: 'googleai/gemini-pro-vision',
       prompt: imagePrompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
