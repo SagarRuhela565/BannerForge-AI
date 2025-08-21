@@ -33,8 +33,8 @@ const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
   }),
-  resolution: z.string({
-    required_error: "Please select a resolution.",
+  aspectRatio: z.string({
+    required_error: "Please select an aspect ratio.",
   }),
 });
 
@@ -53,7 +53,7 @@ export default function ImageGenerationPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      resolution: "16:9",
+      aspectRatio: "16:9",
     },
   });
 
@@ -63,7 +63,7 @@ export default function ImageGenerationPage() {
     try {
       const generationResult = await generateImage({
         prompt: values.prompt,
-        resolution: values.resolution,
+        aspectRatio: values.aspectRatio,
       });
       setResult(generationResult);
     } catch (error) {
@@ -120,14 +120,14 @@ export default function ImageGenerationPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="resolution"
+                  name="aspectRatio"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Resolution</FormLabel>
+                      <FormLabel>Aspect Ratio</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a resolution" />
+                            <SelectValue placeholder="Select an aspect ratio" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -168,7 +168,7 @@ export default function ImageGenerationPage() {
           )}
 
           {result && !isLoading && (
-            <Image
+             <Image
               src={result.imageUrl}
               alt="Generated Image"
               width={1024}

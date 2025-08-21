@@ -30,9 +30,6 @@ const generateImageFlow = ai.defineFlow(
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: prompt,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
       aspectRatio: aspectRatio,
     });
 
