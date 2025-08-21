@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { generateImage } from "@/lib/actions";
 
@@ -26,6 +33,7 @@ const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
   }),
+  aspectRatio: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,6 +51,7 @@ export default function ImageGenerationPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      aspectRatio: "16:9",
     },
   });
 
@@ -52,6 +61,7 @@ export default function ImageGenerationPage() {
     try {
       const generationResult = await generateImage({
         prompt: values.prompt,
+        aspectRatio: values.aspectRatio,
       });
       setResult(generationResult);
     } catch (error) {
@@ -102,6 +112,28 @@ export default function ImageGenerationPage() {
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="aspectRatio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Aspect Ratio</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an aspect ratio" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="16:9">Landscape (16:9)</SelectItem>
+                          <SelectItem value="1:1">Square (1:1)</SelectItem>
+                          <SelectItem value="9:16">Portrait (9:16)</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
