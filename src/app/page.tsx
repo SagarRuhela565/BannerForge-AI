@@ -71,10 +71,10 @@ export default function ImageGenerationPage() {
     <main className="container mx-auto px-4 py-8 md:py-12">
       <div className="text-center w-full mb-12">
         <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight">
-          Text-to-Image Generation
+          AI Banner Generator
         </h1>
         <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
-          Describe the image you want to create.
+          Describe the banner you want to create. Be as specific as you can!
         </p>
       </div>
 
@@ -83,7 +83,7 @@ export default function ImageGenerationPage() {
           <CardHeader>
             <CardTitle className="font-headline text-2xl flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-primary" />
-              Create Your Image
+              Create Your Banner
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -94,10 +94,10 @@ export default function ImageGenerationPage() {
                   name="prompt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image Prompt</FormLabel>
+                      <FormLabel>Banner Prompt</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., A majestic lion wearing a crown, photorealistic, 4k"
+                          placeholder="e.g., A futuristic cityscape at sunset for a tech conference banner"
                           className="resize-y min-h-[100px]"
                           {...field}
                         />
@@ -115,7 +115,7 @@ export default function ImageGenerationPage() {
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Image
+                      Generate Banner
                     </>
                   )}
                 </Button>
@@ -124,11 +124,11 @@ export default function ImageGenerationPage() {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-center p-4 border rounded-lg min-h-[256px]">
+        <div className="w-full aspect-video flex items-center justify-center p-4 border rounded-lg bg-muted/40">
           {isLoading && (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-              <p className="text-lg font-medium">Generating your image...</p>
+              <p className="text-lg font-medium">Generating your banner...</p>
               <p className="text-sm text-muted-foreground">This may take a moment.</p>
             </div>
           )}
@@ -136,16 +136,16 @@ export default function ImageGenerationPage() {
           {result && !isLoading && (
              <Image
               src={result.imageUrl}
-              alt="Generated Image"
+              alt="Generated Banner"
               width={1024}
-              height={1024}
-              className="relative w-full h-auto rounded-lg object-cover"
+              height={576}
+              className="relative w-full h-full rounded-lg object-cover"
             />
           )}
 
           {!isLoading && !result && (
              <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                <p>Your generated image will appear here.</p>
+                <p>Your generated banner will appear here.</p>
              </div>
           )}
         </div>
