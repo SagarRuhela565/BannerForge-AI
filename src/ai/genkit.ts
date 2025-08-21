@@ -7,4 +7,6 @@ export const ai = genkit({
     apiKey: process.env.GEMINI_API_KEY
   })],
   model: 'googleai/gemini-2.0-flash',
+  // Use a fallback model for stability.
+  textModel: 'googleai/gemini-2.0-flash',
 });

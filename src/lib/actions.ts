@@ -19,15 +19,17 @@ export type BannerResult = {
 
 
 export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
+  console.log('Starting banner generation process...');
   const validatedFields = formSchema.safeParse(values);
 
   if (!validatedFields.success) {
+    console.error('Invalid input fields:', validatedFields.error);
     throw new Error('Invalid input.');
   }
   
   const { description, bannerText, resolution } = validatedFields.data;
-
-  console.log("Attempting to generate banner with primary API key...");
+  
+  console.log('Input validated. Calling generateBanner flow...');
 
   try {
       const bannerResult = await generateBanner({
@@ -37,7 +39,8 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
       });
 
       if (!bannerResult || !bannerResult.bannerImage) {
-        throw new Error('Banner generation failed with the primary key.');
+        console.error('Banner generation returned an empty result.');
+        throw new Error('Banner generation failed.');
       }
       
       console.log("Banner generated successfully. Saving to Firestore...");
@@ -52,7 +55,7 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
           createdAt: serverTimestamp(),
         };
         await addDoc(collection(db, 'banners'), bannerData);
-        console.log("Banner saved successfully.");
+        console.log("Banner saved successfully to Firestore.");
       } catch (dbError) {
         console.error('Error saving banner to Firestore:', dbError);
         // Do not block user, just log the error. The banner is still generated.
@@ -64,7 +67,8 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
       };
 
   } catch (error) {
-    console.error(`Fatal error during banner generation:`, error);
-    throw new Error('Failed to generate banner after trying all available options.');
+    console.error(`Fatal error during banner generation flow:`, error);
+    // Re-throw the error to be caught by the client.
+    throw new Error('Failed to generate banner due to a server error.');
   }
 }

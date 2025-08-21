@@ -24,7 +24,7 @@ const GenerateBannerOutputSchema = z.object({
   bannerImage: z.string().describe('The generated banner image as a data URI.'),
   improvementSuggestions: z
     .string()
-    .describe('Suggestions for improving the banner design.'),
+    .describe('Suggestions for improving the banner design, formatted as a bulleted or numbered list.'),
 });
 
 export type GenerateBannerOutput = z.infer<typeof GenerateBannerOutputSchema>;
@@ -33,6 +33,34 @@ export async function generateBanner(input: GenerateBannerInput): Promise<Genera
   return generateBannerFlow(input);
 }
 
+const bannerPrompt = ai.definePrompt({
+    name: 'bannerPrompt',
+    input: { schema: GenerateBannerInputSchema },
+    output: { schema: GenerateBannerOutputSchema },
+
+    prompt: `You are an expert design consultant and image generation specialist.
+      
+      Your task is to generate a banner image and provide expert design feedback based on the user's request.
+      
+      **Request Details:**
+      - **Style Description:** "{{description}}"
+      - **Banner Text:** "{{bannerText}}"
+      - **Resolution:** {{resolution}}
+
+      **Instructions:**
+      1.  **Generate Image:** Create a high-quality banner image that prominently features the requested text ("{{bannerText}}") and adheres to the style description. The image resolution must be {{resolution}}.
+      2.  **Provide Suggestions:** After generating the image, provide 3-4 actionable suggestions for improving the banner. Focus on aspects like layout, color harmony, typography, and imagery. Present the suggestions as a bulleted or numbered list.
+      3.  **Format Output:** Return the generated image as a data URI and the suggestions as a string.
+      `,
+    
+    // We must specify the image generation model here.
+    config: {
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        responseModalities: ['TEXT', 'IMAGE'],
+    }
+});
+
+
 const generateBannerFlow = ai.defineFlow(
   {
     name: 'generateBannerFlow',
@@ -40,44 +68,17 @@ const generateBannerFlow = ai.defineFlow(
     outputSchema: GenerateBannerOutputSchema,
   },
   async (input) => {
+    console.log('Generating banner with input:', input);
     
-    const [imageResult, suggestionsResult] = await Promise.allSettled([
-      // Generate Image
-      ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: `Generate a banner image. Style: "${input.description}". Prominently display this text: "${input.bannerText}". Resolution: ${input.resolution}.`,
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-      }),
-      // Generate Suggestions
-      ai.generate({
-        model: 'googleai/gemini-2.0-flash',
-        prompt: `You are an expert design consultant. A banner was requested with the following details:
-        
-        User's Request:
-        - Description: "${input.description}"
-        - Text: "${input.bannerText}"
-        
-        Please provide 3-4 actionable suggestions to improve a banner created from this request. Focus on aspects like layout, color harmony, typography, and imagery. Present the suggestions as a bulleted or numbered list.`,
-      })
-    ]);
+    const result = await bannerPrompt(input);
+    const output = result.output;
 
-    if (imageResult.status === 'rejected' || !imageResult.value.media?.url) {
-      console.error('Image generation failed:', imageResult.status === 'rejected' ? imageResult.reason : 'No media URL');
-      throw new Error('Failed to generate banner image.');
+    if (!output) {
+      throw new Error('Banner generation failed to produce an output.');
     }
     
-    const bannerImageUri = imageResult.value.media.url;
+    console.log('Successfully generated banner and suggestions.');
     
-    // Suggestions are optional, so we can proceed even if it fails
-    const improvementSuggestions = suggestionsResult.status === 'fulfilled' 
-      ? suggestionsResult.value.text 
-      : 'Could not generate suggestions at this time.';
-
-    return {
-      bannerImage: bannerImageUri,
-      improvementSuggestions: improvementSuggestions,
-    };
+    return output;
   }
 );
