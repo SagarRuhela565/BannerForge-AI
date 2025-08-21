@@ -124,7 +124,7 @@ export default function ImageGenerationPage() {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-center p-4 border rounded-lg">
+        <div className="flex items-center justify-center p-4 border rounded-lg min-h-[256px]">
           {isLoading && (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -139,7 +139,7 @@ export default function ImageGenerationPage() {
               alt="Generated Image"
               width={1024}
               height={1024}
-              className="relative w-full h-auto rounded-lg border object-cover"
+              className="relative w-full h-auto rounded-lg object-cover"
             />
           )}
 
