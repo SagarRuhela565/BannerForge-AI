@@ -14,7 +14,7 @@ const formSchema = z.object({
 
 export type BannerResult = {
   imageUrl: string;
-  suggestions: string; // Keep for data model consistency, will be empty
+  suggestions: string;
 };
 
 export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
@@ -28,11 +28,9 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
   const { description, bannerText, resolution } = validatedFields.data;
 
   try {
-    // Create a direct image prompt.
     const imagePrompt = `Create a high-quality banner with the text "${bannerText}". The desired style is: "${description}". The resolution must be ${resolution}.`;
-    const bannerSuggestions = "Design suggestions feature is currently under development."; // Placeholder
+    const bannerSuggestions = "Design suggestions feature is currently under development.";
 
-    // Generate the image using the correct image generation model.
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: imagePrompt,
@@ -46,7 +44,6 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
     }
     const bannerImageUrl = media.url;
 
-    // Save the complete banner record to Firestore.
     try {
       await addDoc(collection(db, "banners"), {
         description,
@@ -58,10 +55,8 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
       });
     } catch (error) {
       console.error("Error saving banner to Firestore:", error);
-      // We don't re-throw here because the core task (generation) succeeded.
     }
 
-    // Return the result to the client.
     return {
       imageUrl: bannerImageUrl,
       suggestions: bannerSuggestions,
@@ -69,7 +64,6 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
 
   } catch (error) {
     console.error(`Fatal error during banner generation flow:`, error);
-    // Re-throw a user-friendly error to be caught by the client.
     throw new Error('Failed to generate banner due to a server error. Please check the logs.');
   }
 }
