@@ -237,7 +237,7 @@ export default function BannerForgePage() {
                     <Lightbulb className="w-6 h-6 text-primary" />
                     Improvement Suggestions
                   </CardTitle>
-                </Header>
+                </CardHeader>
                 <CardContent>
                   <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap font-body">
                     {result.suggestions}
