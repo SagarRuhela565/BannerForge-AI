@@ -26,19 +26,21 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: z.string(),
   },
   async ({ prompt, aspectRatio }) => {
-    const { media } = await ai.generate({
+    const { output } = await ai.generate({
       model: 'googleai/gemini-1.5-pro-latest',
       prompt: prompt,
-      config: {
-        responseMimeType: 'image/png',
-        aspectRatio: aspectRatio,
+      output: {
+        format: 'data_uri'
       },
+      aspectRatio,
     });
 
-    if (!media?.url) {
+    const url = output?.data_uri;
+
+    if (!url) {
       throw new Error('No image was generated.');
     }
 
-    return media.url;
+    return url;
   }
 );
