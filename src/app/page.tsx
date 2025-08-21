@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { generateAndSaveBanner } from "@/lib/actions";
 
@@ -53,7 +52,6 @@ type BannerResult = {
 
 export default function BannerForgePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<BannerResult | null>(null);
   const { toast } = useToast();
 
@@ -65,41 +63,18 @@ export default function BannerForgePage() {
     },
   });
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
-    if (isLoading) {
-      setProgress(0);
-      let currentProgress = 0;
-      interval = setInterval(() => {
-        currentProgress += Math.random() * 10;
-        if (currentProgress >= 95) {
-          clearInterval(interval);
-        }
-        setProgress(currentProgress);
-      }, 500);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isLoading]);
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
     try {
       const bannerResult = await generateAndSaveBanner(values);
       setResult(bannerResult);
-      setProgress(100);
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request. Please try again.",
       });
-      setProgress(0);
     } finally {
       setIsLoading(false);
     }
@@ -213,9 +188,8 @@ export default function BannerForgePage() {
                 <CardTitle className="font-headline text-2xl">Generating...</CardTitle>
                 <CardDescription>Our AI is crafting your masterpiece. Please wait.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Progress value={progress} className="w-full" />
-                <p className="text-center text-sm text-muted-foreground mt-2">{Math.round(progress)}%</p>
+              <CardContent className="flex items-center justify-center p-12">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
               </CardContent>
             </Card>
           )}

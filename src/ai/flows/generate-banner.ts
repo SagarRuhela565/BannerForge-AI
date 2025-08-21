@@ -24,7 +24,6 @@ const GenerateBannerOutputSchema = z.object({
   improvementSuggestions: z
     .string()
     .describe('Suggestions for improving the banner design.'),
-  progress: z.string().describe('Progress summary of the banner generation.'),
 });
 
 export type GenerateBannerOutput = z.infer<typeof GenerateBannerOutputSchema>;
@@ -33,29 +32,14 @@ export async function generateBanner(input: GenerateBannerInput): Promise<Genera
   return generateBannerFlow(input);
 }
 
-const generateBannerPrompt = ai.definePrompt({
-  name: 'generateBannerPrompt',
-  input: {schema: GenerateBannerInputSchema},
-  output: {schema: GenerateBannerOutputSchema},
-  prompt: `You are an expert banner designer. Please create a banner image based on the following description, text, and resolution. Also provide suggestions to improve the banner.
-
-Description: {{{description}}}
-Text: {{{bannerText}}}
-Resolution: {{{resolution}}}
-
-{{#each this}}
-  {{#if bannerImage}}
-  Progress: Banner generated
-  Suggestions: Here are some improvement suggestions: {{{improvementSuggestions}}}
-  {{/if}}
-{{/each}}
-
-`,
-});
-
 const improveBannerPrompt = ai.definePrompt({
   name: 'improveBannerPrompt',
-  input: {schema: GenerateBannerOutputSchema},
+  input: {schema: z.object({
+    description: GenerateBannerInputSchema.shape.description,
+    bannerText: GenerateBannerInputSchema.shape.bannerText,
+    resolution: GenerateBannerInputSchema.shape.resolution,
+    bannerImage: GenerateBannerOutputSchema.shape.bannerImage,
+  })},
   output: {schema: z.object({improvementSuggestions: z.string()})},
   prompt: `You are an expert consultant on how to improve banners. Given the generated banner and the original description, what suggestions do you have to improve it?
 
@@ -87,28 +71,16 @@ const generateBannerFlow = ai.defineFlow(
       throw new Error('Failed to generate banner image.');
     }
 
-    // Prepare initial output with the generated banner image
-    const initialOutput: GenerateBannerOutput = {
-      bannerImage: media.url,
-      improvementSuggestions: '', // Initialize as empty, will be populated later
-      progress: 'Banner image generated.',
-    };
-
-    const description = input.description;
-    const bannerText = input.bannerText;
-    const resolution = input.resolution;
-
     const {output: improvementOutput} = await improveBannerPrompt({
-        ...initialOutput,
-        description,
-        bannerText,
-        resolution,
+        bannerImage: media.url,
+        description: input.description,
+        bannerText: input.bannerText,
+        resolution: input.resolution,
     })
 
-    // Call the improveBannerPrompt to get improvement suggestions
     // Update the output with the improvement suggestions
     const finalOutput: GenerateBannerOutput = {
-      ...initialOutput,
+      bannerImage: media.url,
       improvementSuggestions: improvementOutput!.improvementSuggestions,
     };
 
