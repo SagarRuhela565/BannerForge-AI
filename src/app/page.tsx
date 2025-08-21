@@ -17,6 +17,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +32,9 @@ import { generateImage } from "@/lib/actions";
 const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
+  }),
+  resolution: z.string({
+    required_error: "Please select a resolution.",
   }),
 });
 
@@ -43,6 +53,7 @@ export default function ImageGenerationPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      resolution: "1:1",
     },
   });
 
@@ -100,6 +111,28 @@ export default function ImageGenerationPage() {
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="resolution"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Resolution</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a resolution" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1:1">Square (1:1)</SelectItem>
+                          <SelectItem value="16:9">Landscape (16:9)</SelectItem>
+                          <SelectItem value="9:16">Portrait (9:16)</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
