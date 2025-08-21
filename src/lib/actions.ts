@@ -3,8 +3,6 @@
 
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from './firebase';
 
 const formSchema = z.object({
   description: z.string().min(10).max(500),
@@ -16,7 +14,7 @@ export type BannerResult = {
   imageUrl: string;
 };
 
-export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
+export async function generateBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
   const validatedFields = formSchema.safeParse(values);
 
   if (!validatedFields.success) {
@@ -41,21 +39,6 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
       throw new Error('Image generation failed to produce an output.');
     }
     const bannerImageUrl = media.url;
-
-    // Save to Firestore without suggestions
-    try {
-      await addDoc(collection(db, "banners"), {
-        description,
-        bannerText,
-        resolution,
-        imageUrl: bannerImageUrl,
-        createdAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error("Error saving banner to Firestore:", error);
-      // We don't throw here, as the image was generated successfully.
-      // The user can still see the result.
-    }
 
     return {
       imageUrl: bannerImageUrl,

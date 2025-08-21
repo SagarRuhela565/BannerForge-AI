@@ -6,14 +6,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import Link from "next/link";
-import { Sparkles, Image as ImageIcon, Loader2, Library } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { generateAndSaveBanner } from "@/lib/actions";
+import { generateBanner } from "@/lib/actions";
 
 const formSchema = z.object({
   description: z.string().min(10, {
@@ -71,7 +69,7 @@ export default function BannerForgePage() {
     setIsLoading(true);
     setResult(null);
     try {
-      const bannerResult = await generateAndSaveBanner(values);
+      const bannerResult = await generateBanner(values);
       setResult(bannerResult);
     } catch (error) {
       console.error("Error during banner generation:", error);
@@ -97,12 +95,6 @@ export default function BannerForgePage() {
             Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals.
           </p>
         </div>
-         <Button asChild variant="outline">
-          <Link href="/gallery" className="flex items-center gap-2">
-            <Library />
-            View Gallery
-          </Link>
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
