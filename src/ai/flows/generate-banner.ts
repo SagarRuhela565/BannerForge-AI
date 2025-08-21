@@ -61,7 +61,7 @@ const generateBannerFlow = ai.defineFlow(
     // Generate the banner image
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate a banner image with the following description: ${input.description}, text: ${input.bannerText}, resolution: ${input.resolution}.`, // Simple prompt for image generation
+      prompt: `Generate a banner image with the following description: "${input.description}", with the text "${input.bannerText}" prominently displayed. The resolution should be ${input.resolution}.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },
