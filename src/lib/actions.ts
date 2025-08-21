@@ -23,7 +23,7 @@ export async function generateImage(values: z.infer<typeof formSchema>): Promise
 
   try {
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: prompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
