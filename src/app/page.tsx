@@ -61,7 +61,10 @@ export default function ImageGenerationPage() {
     setIsLoading(true);
     setResult(null);
     try {
-      const generationResult = await generateImage(values);
+      const generationResult = await generateImage({
+        prompt: values.prompt,
+        resolution: values.resolution,
+      });
       setResult(generationResult);
     } catch (error) {
       console.error("Error during image generation:", error);
@@ -165,14 +168,13 @@ export default function ImageGenerationPage() {
           )}
 
           {result && !isLoading && (
-            <div className="w-full aspect-video relative overflow-hidden rounded-lg border">
-              <Image
-                src={result.imageUrl}
-                alt="Generated Image"
-                fill
-                className="object-fill"
-              />
-            </div>
+            <Image
+              src={result.imageUrl}
+              alt="Generated Image"
+              width={1024}
+              height={576}
+              className="relative w-full h-auto rounded-lg border object-cover"
+            />
           )}
         </div>
       </div>
