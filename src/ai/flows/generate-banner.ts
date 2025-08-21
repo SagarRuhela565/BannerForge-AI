@@ -64,6 +64,7 @@ const generateBannerFlow = ai.defineFlow(
     ]);
 
     if (imageResult.status === 'rejected' || !imageResult.value.media?.url) {
+      console.error('Image generation failed:', imageResult.status === 'rejected' ? imageResult.reason : 'No media URL');
       throw new Error('Failed to generate banner image.');
     }
     

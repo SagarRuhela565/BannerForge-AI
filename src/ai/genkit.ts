@@ -4,7 +4,7 @@ import {googleAI} from '@genkit-ai/googleai';
 export const ai = genkit({
   plugins: [googleAI({
     // This key will be used as a fallback if no other key is provided
-    apiKey: process.env.GEMINI_API_KEY_1
+    apiKey: process.env.GEMINI_API_KEY
   })],
   model: 'googleai/gemini-2.0-flash',
 });

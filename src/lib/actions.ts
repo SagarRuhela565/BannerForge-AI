@@ -27,42 +27,44 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
   
   const { description, bannerText, resolution } = validatedFields.data;
 
-  console.log("Attempting to generate banner...");
-
-  const bannerResult = await generateBanner({
-    description,
-    bannerText,
-    resolution
-  });
-
-  if (!bannerResult || !bannerResult.bannerImage) {
-    throw new Error('Banner generation failed.');
-  }
+  console.log("Attempting to generate banner with primary API key...");
 
   try {
-    const bannerData = {
-      description,
-      bannerText,
-      resolution,
-      imageUrl: bannerResult.bannerImage,
-      suggestions: bannerResult.improvementSuggestions,
-      createdAt: serverTimestamp(),
-    };
+      const bannerResult = await generateBanner({
+        description,
+        bannerText,
+        resolution
+      });
 
-    console.log("Saving banner to Firestore...");
-    await addDoc(collection(db, 'banners'), bannerData);
-    console.log("Banner saved successfully.");
-    
-    return {
-        imageUrl: bannerResult.bannerImage,
-        suggestions: bannerResult.improvementSuggestions,
-    };
+      if (!bannerResult || !bannerResult.bannerImage) {
+        throw new Error('Banner generation failed with the primary key.');
+      }
+      
+      console.log("Banner generated successfully. Saving to Firestore...");
+      
+      try {
+        const bannerData = {
+          description,
+          bannerText,
+          resolution,
+          imageUrl: bannerResult.bannerImage,
+          suggestions: bannerResult.improvementSuggestions,
+          createdAt: serverTimestamp(),
+        };
+        await addDoc(collection(db, 'banners'), bannerData);
+        console.log("Banner saved successfully.");
+      } catch (dbError) {
+        console.error('Error saving banner to Firestore:', dbError);
+        // Do not block user, just log the error. The banner is still generated.
+      }
+      
+      return {
+          imageUrl: bannerResult.bannerImage,
+          suggestions: bannerResult.improvementSuggestions,
+      };
+
   } catch (error) {
-    console.error('Error saving banner to Firestore:', error);
-    // Still return the result to the user, even if DB save fails.
-    return {
-        imageUrl: bannerResult.bannerImage,
-        suggestions: bannerResult.improvementSuggestions,
-    };
+    console.error(`Fatal error during banner generation:`, error);
+    throw new Error('Failed to generate banner after trying all available options.');
   }
 }
