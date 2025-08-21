@@ -12,6 +12,7 @@ import { ai } from '@/ai/genkit';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate an image from.'),
+  images: z.array(z.string()).optional().describe('Optional array of base64 encoded image data URIs to use as inspiration.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -25,12 +26,20 @@ const generateImageFlow = ai.defineFlow(
     inputSchema: GenerateImageInputSchema,
     outputSchema: z.array(z.string()),
   },
-  async ({ prompt }) => {
+  async ({ prompt, images }) => {
     const bannerPrompt = `A website banner of ${prompt}`;
+    
+    const promptParts: (string | { media: { url: string } })[] = [bannerPrompt];
+    if (images && images.length > 0) {
+      images.forEach(url => {
+        promptParts.push({ media: { url } });
+      });
+    }
+
     const imagePromises = Array(3).fill(null).map(() => 
       ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: bannerPrompt,
+        prompt: promptParts,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
