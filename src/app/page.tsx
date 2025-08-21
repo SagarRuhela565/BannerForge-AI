@@ -30,6 +30,7 @@ const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
   }),
+  bannerText: z.string().optional(),
   images: z.array(z.string()).optional(),
 });
 
@@ -49,6 +50,7 @@ export default function ImageGenerationPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      bannerText: "",
       images: [],
     },
   });
@@ -137,6 +139,7 @@ export default function ImageGenerationPage() {
     try {
       const generationResult = await generateImage({
         prompt: values.prompt,
+        bannerText: values.bannerText,
         images: values.images,
       });
       setResult(generationResult);
@@ -191,6 +194,23 @@ export default function ImageGenerationPage() {
                         <Textarea
                           placeholder="e.g., A futuristic cityscape at sunset for a tech conference banner"
                           className="resize-y min-h-[100px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="bannerText"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Banner Text (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., 'Innovate. Create. Inspire.'"
                           {...field}
                         />
                       </FormControl>

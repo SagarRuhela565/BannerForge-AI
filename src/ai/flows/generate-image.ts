@@ -12,6 +12,7 @@ import { ai } from '@/ai/genkit';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate an image from.'),
+  bannerText: z.string().optional().describe('The text to include in the banner.'),
   images: z.array(z.string()).optional().describe('Optional array of base64 encoded image data URIs to use as inspiration.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -26,10 +27,13 @@ const generateImageFlow = ai.defineFlow(
     inputSchema: GenerateImageInputSchema,
     outputSchema: z.array(z.string()),
   },
-  async ({ prompt, images }) => {
-    const bannerPrompt = `A website banner of ${prompt}`;
+  async ({ prompt, bannerText, images }) => {
+    let finalPrompt = `A website banner of ${prompt}`;
+    if (bannerText) {
+      finalPrompt += ` with the text "${bannerText}" prominently displayed.`;
+    }
     
-    const promptParts: (string | { media: { url: string } })[] = [bannerPrompt];
+    const promptParts: (string | { media: { url: string } })[] = [finalPrompt];
     if (images && images.length > 0) {
       images.forEach(url => {
         promptParts.push({ media: { url } });
