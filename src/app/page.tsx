@@ -31,8 +31,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { generateAndSaveBanner } from "@/lib/actions";
 
-export const maxDuration = 120; // 2 minutes
-
 const formSchema = z.object({
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",

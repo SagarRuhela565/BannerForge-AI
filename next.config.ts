@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -21,6 +22,10 @@ const nextConfig: NextConfig = {
         hostname: 'generativelanguage.googleapis.com',
       },
     ],
+  },
+  serverActions: {
+    bodySizeLimit: '2mb',
+    maxDuration: 120,
   },
 };
 
