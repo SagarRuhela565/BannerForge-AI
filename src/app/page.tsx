@@ -21,13 +21,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { generateImage } from "@/lib/actions";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 
 const formSchema = z.object({
   prompt: z.string().min(10, {
@@ -160,49 +153,47 @@ export default function ImageGenerationPage() {
           </CardContent>
         </Card>
 
-        <div className="w-full aspect-video flex items-center justify-center p-4 border rounded-lg bg-muted/40">
+        <div className="w-full">
           {isLoading && (
-            <div className="flex flex-col items-center justify-center p-12 text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-              <p className="text-lg font-medium">Generating your banners...</p>
-              <p className="text-sm text-muted-foreground">
-                This may take a moment.
-              </p>
+            <div className="w-full aspect-video flex items-center justify-center p-4 border rounded-lg bg-muted/40">
+              <div className="flex flex-col items-center justify-center p-12 text-center">
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-lg font-medium">Generating your banners...</p>
+                <p className="text-sm text-muted-foreground">
+                  This may take a moment.
+                </p>
+              </div>
             </div>
           )}
 
           {result && !isLoading && (
-            <Carousel className="w-full max-w-full">
-              <CarouselContent>
-                {result.imageUrls.map((url, index) => (
-                  <CarouselItem key={index} className="relative group">
-                    <div className="aspect-video relative w-full">
-                      <Image
-                        src={url}
-                        alt={`Generated Banner ${index + 1}`}
-                        fill
-                        className="rounded-lg object-cover"
-                      />
-                       <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDownload(url)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
+             <div className="flex flex-col gap-4">
+              {result.imageUrls.map((url, index) => (
+                <div key={index} className="relative group w-full aspect-video">
+                  <Image
+                    src={url}
+                    alt={`Generated Banner ${index + 1}`}
+                    fill
+                    className="rounded-lg object-cover"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDownload(url)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
 
           {!isLoading && !result && (
-            <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-              <p>Your generated banners will appear here.</p>
+            <div className="w-full aspect-video flex items-center justify-center p-4 border rounded-lg bg-muted/40">
+              <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+                <p>Your generated banners will appear here.</p>
+              </div>
             </div>
           )}
         </div>
