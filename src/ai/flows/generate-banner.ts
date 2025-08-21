@@ -57,7 +57,6 @@ const suggestionsFlow = ai.defineFlow(
     outputSchema: GenerateSuggestionsOutputSchema,
   },
   async (input) => {
-    console.log('Generating suggestions with input:', input);
     
     const result = await suggestionsPrompt(input);
     const output = result.output;
@@ -65,8 +64,6 @@ const suggestionsFlow = ai.defineFlow(
     if (!output) {
       throw new Error('Suggestion generation failed to produce an output.');
     }
-    
-    console.log('Successfully generated suggestions.');
     
     return output;
   }

@@ -76,7 +76,7 @@ export default function BannerForgePage() {
       setResult(bannerResult);
     } catch (error) {
       console.error("Error during banner generation:", error);
-      const errorMessage = error instanceof Error ? error.message : "There was a problem with your request. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -98,8 +98,8 @@ export default function BannerForgePage() {
             Craft the perfect banner in seconds. Describe your vision, and let our AI bring it to life with stunning visuals and expert suggestions.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/gallery">
+         <Button asChild variant="outline">
+          <Link href="/gallery" className="flex items-center gap-2">
             <Library />
             View Gallery
           </Link>
