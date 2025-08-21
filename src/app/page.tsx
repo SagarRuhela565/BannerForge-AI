@@ -31,6 +31,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { generateAndSaveBanner } from "@/lib/actions";
 
+export const maxDuration = 120; // 2 minutes
+
 const formSchema = z.object({
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
@@ -237,7 +239,7 @@ export default function BannerForgePage() {
                     <Lightbulb className="w-6 h-6 text-primary" />
                     Improvement Suggestions
                   </CardTitle>
-                </CardHeader>
+                </Header>
                 <CardContent>
                   <div className="prose prose-sm max-w-none text-foreground/90 whitespace-pre-wrap font-body">
                     {result.suggestions}
