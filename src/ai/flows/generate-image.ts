@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating images using Gemini.
@@ -25,10 +26,11 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: z.array(z.string()),
   },
   async ({ prompt }) => {
+    const bannerPrompt = `A website banner of ${prompt}`;
     const imagePromises = Array(3).fill(null).map(() => 
       ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: prompt,
+        prompt: bannerPrompt,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
