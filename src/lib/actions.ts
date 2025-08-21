@@ -2,7 +2,6 @@
 'use server';
 
 import { z } from 'zod';
-import { generateSuggestions } from '@/ai/flows/generate-banner';
 import { ai } from '@/ai/genkit';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from './firebase';
@@ -15,7 +14,7 @@ const formSchema = z.object({
 
 export type BannerResult = {
   imageUrl: string;
-  suggestions: string;
+  suggestions: string; // Keep for data model consistency, will be empty
 };
 
 export async function generateAndSaveBanner(values: z.infer<typeof formSchema>): Promise<BannerResult> {
@@ -29,19 +28,13 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
   const { description, bannerText, resolution } = validatedFields.data;
 
   try {
-    // Step 1: Generate design suggestions first.
-    const suggestionsResult = await generateSuggestions({ description, bannerText });
-    if (!suggestionsResult || !suggestionsResult.improvementSuggestions) {
-      throw new Error('Failed to generate suggestions.');
-    }
-    const bannerSuggestions = suggestionsResult.improvementSuggestions;
+    // Create a direct image prompt.
+    const imagePrompt = `Create a high-quality banner with the text "${bannerText}". The desired style is: "${description}". The resolution must be ${resolution}.`;
+    const bannerSuggestions = "Design suggestions feature is currently under development."; // Placeholder
 
-    // Step 2: Create a more detailed image prompt using the suggestions.
-    const imagePrompt = `Create a high-quality banner with the text "${bannerText}". The desired style is: "${description}". The resolution must be ${resolution}. For inspiration, consider these design suggestions: ${bannerSuggestions}`;
-
-    // Step 3: Generate the image.
+    // Generate the image using the correct image generation model.
     const { media } = await ai.generate({
-      model: 'googleai/gemini-pro-vision',
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: imagePrompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
@@ -53,7 +46,7 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
     }
     const bannerImageUrl = media.url;
 
-    // Step 4: Save the complete banner record to Firestore.
+    // Save the complete banner record to Firestore.
     try {
       await addDoc(collection(db, "banners"), {
         description,
@@ -66,10 +59,9 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
     } catch (error) {
       console.error("Error saving banner to Firestore:", error);
       // We don't re-throw here because the core task (generation) succeeded.
-      // The user still gets their banner, but we log the persistence error.
     }
 
-    // Step 5: Return the result to the client.
+    // Return the result to the client.
     return {
       imageUrl: bannerImageUrl,
       suggestions: bannerSuggestions,
