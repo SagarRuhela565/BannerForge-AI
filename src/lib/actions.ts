@@ -96,7 +96,7 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
 }
 
 export async function refineBanner(values: z.infer<typeof refineFormSchema>): Promise<BannerResult> {
-    const validatedFields = refineFormSchema.safe_parse(values);
+    const validatedFields = refineFormSchema.safeParse(values);
     
     if (!validatedFields.success) {
         console.error('Invalid input fields for refinement:', validatedFields.error);
