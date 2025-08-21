@@ -62,6 +62,7 @@ export default function BannerForgePage() {
     defaultValues: {
       description: "",
       bannerText: "",
+      resolution: "1920x1080", // Set a default value
     },
   });
 
@@ -72,6 +73,7 @@ export default function BannerForgePage() {
       const bannerResult = await generateAndSaveBanner(values);
       setResult(bannerResult);
     } catch (error) {
+      console.error("Error during banner generation:", error);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
