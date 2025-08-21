@@ -11,7 +11,7 @@ const formSchema = z.object({
 });
 
 export type GenerationResult = {
-  imageUrl: string;
+  imageUrls: string[];
 };
 
 export async function generateImage(values: z.infer<typeof formSchema>): Promise<GenerationResult> {
@@ -25,14 +25,14 @@ export async function generateImage(values: z.infer<typeof formSchema>): Promise
 
   try {
     const flowInput: GenerateImageInput = { prompt };
-    const imageUrl = await generateImageFlow(flowInput);
+    const imageUrls = await generateImageFlow(flowInput);
 
-    if (!imageUrl) {
+    if (!imageUrls || imageUrls.length === 0) {
       throw new Error('Image generation failed to produce an output.');
     }
 
     return {
-      imageUrl: imageUrl,
+      imageUrls: imageUrls,
     };
 
   } catch (error) {

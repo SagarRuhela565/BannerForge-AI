@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { generateImage } from "@/lib/actions";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const formSchema = z.object({
   prompt: z.string().min(10, {
@@ -31,7 +38,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 type GenerationResult = {
-  imageUrl: string;
+  imageUrls: string[];
 };
 
 export default function ImageGenerationPage() {
@@ -46,6 +53,28 @@ export default function ImageGenerationPage() {
     },
   });
 
+  const handleDownload = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = "banner.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      toast({
+        variant: "destructive",
+        title: "Download failed",
+        description: "Could not download the image. Please try again.",
+      });
+    }
+  };
+
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     setResult(null);
@@ -56,7 +85,10 @@ export default function ImageGenerationPage() {
       setResult(generationResult);
     } catch (error) {
       console.error("Error during image generation:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred. Please try again.";
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -74,7 +106,8 @@ export default function ImageGenerationPage() {
           AI Banner Generator
         </h1>
         <p className="mt-4 text-lg text-foreground/80 max-w-2xl mx-auto">
-          Describe the banner you want to create. Be as specific as you can!
+          Describe the banner you want to create. We'll generate 3 options for
+          you!
         </p>
       </div>
 
@@ -88,7 +121,10 @@ export default function ImageGenerationPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
                 <FormField
                   control={form.control}
                   name="prompt"
@@ -115,7 +151,7 @@ export default function ImageGenerationPage() {
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Banner
+                      Generate Banners
                     </>
                   )}
                 </Button>
@@ -128,25 +164,46 @@ export default function ImageGenerationPage() {
           {isLoading && (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-              <p className="text-lg font-medium">Generating your banner...</p>
-              <p className="text-sm text-muted-foreground">This may take a moment.</p>
+              <p className="text-lg font-medium">Generating your banners...</p>
+              <p className="text-sm text-muted-foreground">
+                This may take a moment.
+              </p>
             </div>
           )}
 
           {result && !isLoading && (
-             <Image
-              src={result.imageUrl}
-              alt="Generated Banner"
-              width={1024}
-              height={576}
-              className="relative w-full h-full rounded-lg object-cover"
-            />
+            <Carousel className="w-full max-w-full">
+              <CarouselContent>
+                {result.imageUrls.map((url, index) => (
+                  <CarouselItem key={index} className="relative group">
+                    <div className="aspect-video relative w-full">
+                      <Image
+                        src={url}
+                        alt={`Generated Banner ${index + 1}`}
+                        fill
+                        className="rounded-lg object-cover"
+                      />
+                       <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleDownload(url)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           )}
 
           {!isLoading && !result && (
-             <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                <p>Your generated banner will appear here.</p>
-             </div>
+            <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+              <p>Your generated banners will appear here.</p>
+            </div>
           )}
         </div>
       </div>
