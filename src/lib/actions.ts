@@ -3,8 +3,6 @@
 
 import { z } from 'zod';
 import { generateSuggestions } from '@/ai/flows/generate-banner';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ai } from '@/ai/genkit';
 
 const formSchema = z.object({
@@ -59,23 +57,8 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
       const bannerImageUrl = media.url;
       const bannerSuggestions = suggestionsResult.improvementSuggestions;
       
-      // Step 3: Save to Firestore
-      console.log("Saving to Firestore...");
-      try {
-        const bannerData = {
-          description,
-          bannerText,
-          resolution,
-          imageUrl: bannerImageUrl,
-          suggestions: bannerSuggestions,
-          createdAt: serverTimestamp(),
-        };
-        await addDoc(collection(db, 'banners'), bannerData);
-        console.log("Banner saved successfully to Firestore.");
-      } catch (dbError) {
-        console.error('Error saving banner to Firestore:', dbError);
-        // Do not block user, just log the error. The banner is still generated.
-      }
+      // Step 3: Return the result to the client.
+      // Firestore saving is temporarily removed to isolate the core functionality.
       
       return {
           imageUrl: bannerImageUrl,
