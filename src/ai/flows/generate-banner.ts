@@ -1,9 +1,10 @@
+
 'use server';
 
 /**
- * @fileOverview Generates a banner image based on a description, text, and resolution.
+ * @fileOverview Generates a banner image based on a description, text, and resolution, and provides improvement suggestions.
  *
- * - generateBanner - A function that generates a banner image.
+ * - generateBanner - A function that generates a banner image and suggestions.
  * - GenerateBannerInput - The input type for the generateBanner function.
  * - GenerateBannerOutput - The return type for the generateBanner function.
  */
@@ -40,24 +41,26 @@ export async function generateBanner(input: GenerateBannerInput, options?: FlowO
     ]
   });
 
-  const improveBannerPrompt = ai.definePrompt({
-    name: 'improveBannerPrompt',
-    input: {schema: z.object({
-      description: GenerateBannerInputSchema.shape.description,
-      bannerText: GenerateBannerInputSchema.shape.bannerText,
-      resolution: GenerateBannerInputSchema.shape.resolution,
-      bannerImage: GenerateBannerOutputSchema.shape.bannerImage,
-    })},
-    output: {schema: z.object({improvementSuggestions: z.string()})},
-    prompt: `You are an expert consultant on how to improve banners. Given the generated banner and the original description, what suggestions do you have to improve it?
+  const generateBannerAndSuggestionsPrompt = ai.definePrompt({
+    name: 'generateBannerAndSuggestionsPrompt',
+    input: {schema: GenerateBannerInputSchema},
+    output: {schema: GenerateBannerOutputSchema},
+    prompt: `You are an expert graphic designer. Your task is to generate a banner image and then provide suggestions for how to improve it.
 
-Description: {{{description}}}
-Text: {{{bannerText}}}
-Resolution: {{{resolution}}}
-Generated Banner: {{media url=bannerImage}}
+First, generate a banner image with the following specifications:
+- Description: "{{description}}"
+- Text: "{{bannerText}}"
+- Resolution: {{resolution}}
 
-Suggestions:`, 
-  })
+After generating the image, provide a list of suggestions to improve the banner's design, typography, color scheme, and overall impact.
+
+The output must be a JSON object with two keys: "bannerImage" (the data URI of the generated image) and "improvementSuggestions" (a string containing your suggestions).
+`,
+    // Note: We are not using the 'output.schema' to directly generate the image and text in one go with a multimodal model,
+    // as that can be less reliable. Instead, we'll call the image generation model first, then the text model for suggestions.
+    // The prompt above is a conceptual guide for the flow's logic.
+  });
+
 
   const generateBannerFlow = ai.defineFlow(
     {
@@ -66,9 +69,10 @@ Suggestions:`,
       outputSchema: GenerateBannerOutputSchema,
     },
     async (input) => {
+      // Step 1: Generate the banner image.
       const {media} = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: `Generate a banner image with the following description: "${input.description}", with the text "${input.bannerText}" prominently displayed. The resolution should be ${input.resolution}.`,
+        prompt: `Generate a banner image. Style: "${input.description}". Prominently display this text: "${input.bannerText}". Resolution: ${input.resolution}.`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
@@ -77,15 +81,28 @@ Suggestions:`,
       if (!media?.url) {
         throw new Error('Failed to generate banner image.');
       }
+      
+      const bannerImageUri = media.url;
 
-      const {output: improvementOutput} = await improveBannerPrompt({
-          bannerImage: media.url,
-          ...input,
-      })
+      // Step 2: Generate improvement suggestions based on the original request and the generated image.
+      const { text } = await ai.generate({
+          model: 'googleai/gemini-2.0-flash',
+          prompt: `You are an expert design consultant. A banner was just created based on the user's request.
+          
+          User's Request:
+          - Description: "${input.description}"
+          - Text: "${input.bannerText}"
+          
+          Here is the generated banner: {{media url=bannerImage}}
+
+          Please provide 3-4 actionable suggestions to improve the banner's design. Focus on aspects like layout, color harmony, typography, and imagery. Present the suggestions as a bulleted or numbered list.`,
+          media: { bannerImage: { url: bannerImageUri } }
+      });
+
 
       const finalOutput: GenerateBannerOutput = {
-        bannerImage: media.url,
-        improvementSuggestions: improvementOutput!.improvementSuggestions,
+        bannerImage: bannerImageUri,
+        improvementSuggestions: text,
       };
 
       return finalOutput;

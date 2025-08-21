@@ -20,6 +20,7 @@ export type BannerResult = {
 
 async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiKey: string): Promise<BannerResult | null> {
   try {
+    // First, a quick check to see if the key is valid with a simple text request.
     const testResult = await testApiKey({ apiKey });
     if (!testResult.ok) {
         console.warn(`API key test failed for a key. Trying next key.`);
@@ -28,6 +29,7 @@ async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiK
 
     console.log("API Key is valid, proceeding with banner generation.");
 
+    // If the key is valid, proceed with the more intensive banner generation.
     const result = await generateBanner({
       description: values.description,
       bannerText: values.bannerText,
@@ -35,7 +37,7 @@ async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiK
     }, { apiKey });
 
     if (!result.bannerImage) {
-      console.error('Failed to generate banner image with a key.');
+      console.error('Failed to generate banner image with a key, even after a successful API key test.');
       return null;
     }
     
@@ -44,7 +46,8 @@ async function tryGenerateBannerWithKey(values: z.infer<typeof formSchema>, apiK
       suggestions: result.improvementSuggestions,
     };
   } catch (error) {
-    console.warn(`Banner generation failed with a key. Trying next key.`, error);
+    // This catch block handles errors during either the test or the generation.
+    console.warn(`Banner generation process failed with a key. Trying next key.`, error);
     return null;
   }
 }
@@ -62,16 +65,20 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
     process.env.GEMINI_API_KEY_1,
     process.env.GEMINI_API_KEY_2,
     process.env.GEMINI_API_KEY_3,
-  ];
+  ].filter((key): key is string => Boolean(key)); // Filter out any undefined keys
+
+  if (apiKeys.length === 0) {
+    throw new Error('No API keys found. Please add at least one GEMINI_API_KEY to your environment variables.');
+  }
 
   let bannerResult: BannerResult | null = null;
 
   for (const key of apiKeys) {
-    if (key) {
-        bannerResult = await tryGenerateBannerWithKey(validatedFields.data, key);
-        if (bannerResult) {
-          break; 
-        }
+    console.log("Attempting to generate banner with a new key...");
+    bannerResult = await tryGenerateBannerWithKey(validatedFields.data, key);
+    if (bannerResult) {
+      console.log("Successfully generated banner.");
+      break; 
     }
   }
 
@@ -89,11 +96,15 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
       createdAt: serverTimestamp(),
     };
 
+    console.log("Saving banner to Firestore...");
     await addDoc(collection(db, 'banners'), bannerData);
+    console.log("Banner saved successfully.");
     
     return bannerResult;
   } catch (error) {
     console.error('Error saving banner to Firestore:', error);
-    throw new Error('An error occurred while saving the banner. Please try again.');
+    // Still return the result to the user, even if DB save fails.
+    // The user cares about the image, not the gallery persistence in this immediate moment.
+    return bannerResult;
   }
 }
