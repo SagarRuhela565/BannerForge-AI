@@ -47,7 +47,7 @@ export async function generateAndSaveBanner(values: z.infer<typeof formSchema>):
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         prompt: imagePrompt,
         config: {
-            responseModalities: ['IMAGE'],
+            responseModalities: ['TEXT', 'IMAGE'],
         },
       });
 
