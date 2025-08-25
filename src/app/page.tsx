@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import { Sparkles, Loader2, Download, Upload, X as XIcon } from "lucide-react";
+import { Sparkles, Loader2, Download, Upload, X as XIcon, Lightbulb } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,11 +17,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { generateImage } from "@/lib/actions";
+import { generateImage, generatePromptSuggestions } from "@/lib/actions";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+
 
 const MAX_FILES = 3;
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
@@ -30,20 +33,20 @@ const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
   }),
-  bannerText: z.string().optional(),
   images: z.array(z.string()).optional(),
   logo: z.string().optional(),
+  bannerText: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-type GenerationResult = {
-  imageUrls: string[];
-};
 
 export default function ImageGenerationPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<GenerationResult | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[] | null>(null);
+  const [promptSuggestions, setPromptSuggestions] = useState<string[]>([]);
+  const [suggestionInput, setSuggestionInput] = useState("");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const { toast } = useToast();
@@ -52,54 +55,65 @@ export default function ImageGenerationPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      bannerText: "",
       images: [],
       logo: "",
+      bannerText: "",
     },
   });
+  
+  const handleDownload = (url: string, index: number) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `banner-${index + 1}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
-
+  
     if (files.length + imagePreviews.length > MAX_FILES) {
       toast({
-        variant: "destructive",
-        title: "Too many files",
+        variant: 'destructive',
+        title: 'Too many files',
         description: `You can only upload a maximum of ${MAX_FILES} images.`,
       });
       return;
     }
-
+  
     const newPreviews: string[] = [];
-    const newImageData: string[] = form.getValues("images") || [];
-
-    Array.from(files).forEach(file => {
+    const newImageDataUrls: string[] = [];
+    const filesArray = Array.from(files);
+  
+    filesArray.forEach((file) => {
       if (file.size > MAX_FILE_SIZE) {
         toast({
-          variant: "destructive",
-          title: "File too large",
+          variant: 'destructive',
+          title: 'File too large',
           description: `"${file.name}" is larger than the 4MB limit.`,
         });
         return;
       }
-      
+  
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
-        if(dataUrl) {
+        if (dataUrl) {
           newPreviews.push(dataUrl);
-          newImageData.push(dataUrl);
-          if (newImageData.length === (form.getValues("images")?.length || 0) + files.length) {
-            setImagePreviews(current => [...current, ...newPreviews]);
-            form.setValue("images", newImageData);
-          }
+          newImageDataUrls.push(dataUrl);
+        }
+        
+        if (newPreviews.length === filesArray.length) {
+          const currentImages = form.getValues('images') || [];
+          form.setValue('images', [...currentImages, ...newImageDataUrls]);
+          setImagePreviews((current) => [...current, ...newPreviews]);
         }
       };
       reader.readAsDataURL(file);
     });
-    
-    // Reset file input
+  
     event.target.value = '';
   };
   
@@ -143,39 +157,51 @@ export default function ImageGenerationPage() {
     form.setValue("logo", "");
   }
 
-  const handleDownload = async (url: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const objectUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = "banner.png";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(objectUrl);
-    } catch (error) {
-      console.error("Error downloading image:", error);
+  const handleGenerateSuggestions = async () => {
+    if (!suggestionInput) {
       toast({
         variant: "destructive",
-        title: "Download failed",
-        description: "Could not download the image. Please try again.",
+        title: "Input needed",
+        description: "Please enter some text to get suggestions.",
       });
+      return;
     }
+    setIsSuggesting(true);
+    setPromptSuggestions([]);
+    try {
+      const suggestions = await generatePromptSuggestions({ bannerText: suggestionInput });
+      setPromptSuggestions(suggestions);
+    } catch (error) {
+      console.error("Error generating prompt suggestions:", error);
+      toast({
+        variant: "destructive",
+        title: "Suggestion generation failed.",
+        description: "Could not generate prompt suggestions. Please try again.",
+      });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const useSuggestion = (suggestion: string) => {
+    form.setValue("prompt", suggestion);
+    toast({
+      title: "Prompt updated!",
+      description: "The selected suggestion has been set as your banner prompt.",
+    });
   };
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
-    setResult(null);
+    setGeneratedImageUrls(null);
     try {
-      const generationResult = await generateImage({
+      const imageUrls = await generateImage({
         prompt: values.prompt,
-        bannerText: values.bannerText,
         images: values.images,
         logo: values.logo,
+        bannerText: values.bannerText,
       });
-      setResult(generationResult);
+      setGeneratedImageUrls(imageUrls);
     } catch (error) {
       console.error("Error during image generation:", error);
       const errorMessage =
@@ -212,6 +238,55 @@ export default function ImageGenerationPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="suggestion-input">Banner Idea</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="suggestion-input"
+                    placeholder="e.g., A banner for a tech conference"
+                    value={suggestionInput}
+                    onChange={(e) => setSuggestionInput(e.target.value)}
+                  />
+                  <Button onClick={handleGenerateSuggestions} disabled={isSuggesting} variant="outline">
+                    {isSuggesting ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Lightbulb className="mr-2 h-4 w-4" />
+                    )}
+                    Suggest
+                  </Button>
+                </div>
+              </div>
+
+              {isSuggesting && (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              )}
+
+              {promptSuggestions.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Suggestions</Label>
+                  {promptSuggestions.map((suggestion, index) => (
+                    <Card key={index} className="p-3">
+                      <p className="text-sm mb-2">{suggestion}</p>
+                      <Button
+                        size="sm"
+                        variant="link"
+                        onClick={() => useSuggestion(suggestion)}
+                        className="p-0 h-auto"
+                      >
+                        Use this prompt
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <Separator className="my-8" />
+
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -240,10 +315,11 @@ export default function ImageGenerationPage() {
                   name="bannerText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Banner Text (Optional)</FormLabel>
+                      <FormLabel>Content Suggestion (Optional)</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="e.g., 'Innovate. Create. Inspire.'"
+                        <Textarea
+                          placeholder="e.g., A catchy headline and a call to action"
+                          className="resize-y"
                           {...field}
                         />
                       </FormControl>
@@ -390,30 +466,32 @@ export default function ImageGenerationPage() {
             </div>
           )}
 
-          {result && !isLoading && (
+          {generatedImageUrls && !isLoading && (
              <div className="flex flex-col gap-4">
-              {result.imageUrls.map((url, index) => (
-                <div key={index} className="relative group w-full aspect-video">
+              {generatedImageUrls.map((url, index) => (
+                <div key={index} className="relative group w-full aspect-video rounded-lg overflow-hidden">
                   <Image
                     src={url}
                     alt={`Generated Banner ${index + 1}`}
                     fill
-                    className="rounded-lg object-cover"
+                    className="object-cover"
                   />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDownload(url)}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                      onClick={() => handleDownload(url, index)}
+                      variant="secondary"
+                      size="lg"
+                    >
+                      <Download className="mr-2 h-5 w-5" />
+                      Download
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
 
-          {!isLoading && !result && (
+          {!isLoading && !generatedImageUrls && (
             <div className="w-full aspect-video flex items-center justify-center p-4 border rounded-lg bg-muted/40">
               <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                 <p>Your generated banners will appear here.</p>
@@ -425,3 +503,5 @@ export default function ImageGenerationPage() {
     </main>
   );
 }
+
+    
