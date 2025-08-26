@@ -33,34 +33,34 @@ const generateImageFlow = ai.defineFlow(
     if (bannerText) {
       finalPrompt += ` ${bannerText}.`;
     }
-    
+
     finalPrompt += ` The banner should be visually striking and suitable for social media advertising, branding, event promotion, and communication. The banner should have a clear space for text to be added later. Do not include any text in the image.`;
-    
-    const promptParts: (string | { media: { url: string } })[] = [finalPrompt];
-    
+
+    const input: (string | { media: { url: string } })[] = [finalPrompt];
+
     if (logo) {
-      promptParts.push({ media: { url: logo } });
+      input.push({ media: { url: logo } });
     }
-    
+
     if (images && images.length > 0) {
-      images.forEach(url => {
-        promptParts.push({ media: { url } });
+      images.forEach((url) => {
+        input.push({ media: { url } });
       });
     }
 
-    const imagePromises = Array(3).fill(null).map(() => 
+    const imagePromises = Array(3).fill(null).map(() =>
       ai.generate({
         model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: promptParts,
+        input,
         config: {
-          responseModalities: ['TEXT', 'IMAGE'],
+          responseModalities: ['IMAGE'],
         },
       })
     );
 
     const results = await Promise.all(imagePromises);
 
-    const imageUrls = results.map(result => {
+    const imageUrls = results.map((result, i) => {
       if (!result.media?.url) {
         throw new Error('No image was generated for one of the requests.');
       }

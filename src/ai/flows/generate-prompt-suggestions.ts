@@ -28,8 +28,12 @@ const generatePromptSuggestionsFlow = ai.defineFlow(
   },
   async ({ bannerText }) => {
     const { output } = await ai.generate({
-      model: googleAI('gemini-2.5-flash'),
-      output: { schema: z.object({ prompts: z.array(z.string()) }) },
+      model: 'googleai/gemini-2.5-flash', // ✅ use string, not googleAI()
+  output: {
+    schema: z.object({
+      prompts: z.array(z.string())
+    }),
+  },
       prompt: `You are a world-class expert at writing "mega-prompts" for generative AI image models. Your task is to take a user's simple banner text and generate 3 extremely detailed and descriptive prompts that will produce a high-quality, professional banner.
 
 Each prompt must be a complete recipe, clearly defining all the elements needed for the banner. It should cover:
