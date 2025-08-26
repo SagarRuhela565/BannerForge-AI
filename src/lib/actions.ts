@@ -9,9 +9,9 @@ const generateFormSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
   }),
-  images: z.array(z.string()).optional(),
-  logo: z.string().optional(),
-  bannerText: z.string().optional(),
+  // images: z.array(z.string()).optional(),
+  // logo: z.string().optional(),
+  // bannerText: z.string().optional(),
 });
 
 
@@ -22,10 +22,10 @@ export async function generateImage(values: z.infer<typeof generateFormSchema>):
     throw new Error('Invalid input provided.');
   }
 
-  const { prompt, images, logo, bannerText } = validatedFields.data;
+  const { prompt } = validatedFields.data;
 
   try {
-    const flowInput: GenerateImageInput = { prompt, images, logo, bannerText };
+    const flowInput: GenerateImageInput = { prompt };
     const imageUrls = await generateImageFlow(flowInput);
 
     if (!imageUrls || imageUrls.length === 0) {

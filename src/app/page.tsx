@@ -33,9 +33,9 @@ const formSchema = z.object({
   prompt: z.string().min(10, {
     message: "Prompt must be at least 10 characters.",
   }),
-  images: z.array(z.string()).optional(),
-  logo: z.string().optional(),
-  bannerText: z.string().optional(),
+  // images: z.array(z.string()).optional(),
+  // logo: z.string().optional(),
+  // bannerText: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -47,17 +47,17 @@ export default function ImageGenerationPage() {
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[] | null>(null);
   const [promptSuggestions, setPromptSuggestions] = useState<string[]>([]);
   const [suggestionInput, setSuggestionInput] = useState("");
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  // const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  // const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
-      images: [],
-      logo: "",
-      bannerText: "",
+      // images: [],
+      // logo: "",
+      // bannerText: "",
     },
   });
   
@@ -70,92 +70,92 @@ export default function ImageGenerationPage() {
     document.body.removeChild(link);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
+  // const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = event.target.files;
+  //   if (!files) return;
   
-    if (files.length + imagePreviews.length > MAX_FILES) {
-      toast({
-        variant: 'destructive',
-        title: 'Too many files',
-        description: `You can only upload a maximum of ${MAX_FILES} images.`,
-      });
-      return;
-    }
+  //   if (files.length + imagePreviews.length > MAX_FILES) {
+  //     toast({
+  //       variant: 'destructive',
+  //       title: 'Too many files',
+  //       description: `You can only upload a maximum of ${MAX_FILES} images.`,
+  //     });
+  //     return;
+  //   }
   
-    const newPreviews: string[] = [];
-    const newImageDataUrls: string[] = [];
-    const filesArray = Array.from(files);
+  //   const newPreviews: string[] = [];
+  //   const newImageDataUrls: string[] = [];
+  //   const filesArray = Array.from(files);
   
-    filesArray.forEach((file) => {
-      if (file.size > MAX_FILE_SIZE) {
-        toast({
-          variant: 'destructive',
-          title: 'File too large',
-          description: `"${file.name}" is larger than the 4MB limit.`,
-        });
-        return;
-      }
+  //   filesArray.forEach((file) => {
+  //     if (file.size > MAX_FILE_SIZE) {
+  //       toast({
+  //         variant: 'destructive',
+  //         title: 'File too large',
+  //         description: `"${file.name}" is larger than the 4MB limit.`,
+  //       });
+  //       return;
+  //     }
   
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        if (dataUrl) {
-          newPreviews.push(dataUrl);
-          newImageDataUrls.push(dataUrl);
-        }
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       const dataUrl = e.target?.result as string;
+  //       if (dataUrl) {
+  //         newPreviews.push(dataUrl);
+  //         newImageDataUrls.push(dataUrl);
+  //       }
         
-        if (newPreviews.length === filesArray.length) {
-          const currentImages = form.getValues('images') || [];
-          form.setValue('images', [...currentImages, ...newImageDataUrls]);
-          setImagePreviews((current) => [...current, ...newPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+  //       if (newPreviews.length === filesArray.length) {
+  //         const currentImages = form.getValues('images') || [];
+  //         form.setValue('images', [...currentImages, ...newImageDataUrls]);
+  //         setImagePreviews((current) => [...current, ...newPreviews]);
+  //       }
+  //     };
+  //     reader.readAsDataURL(file);
+  //   });
   
-    event.target.value = '';
-  };
+  //   event.target.value = '';
+  // };
   
-  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  // const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (!file) return;
 
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        variant: "destructive",
-        title: "File too large",
-        description: `The logo file must be less than 4MB.`,
-      });
-      return;
-    }
+  //   if (file.size > MAX_FILE_SIZE) {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "File too large",
+  //       description: `The logo file must be less than 4MB.`,
+  //     });
+  //     return;
+  //   }
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setLogoPreview(dataUrl);
-      form.setValue("logo", dataUrl);
-    };
-    reader.readAsDataURL(file);
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     const dataUrl = e.target?.result as string;
+  //     setLogoPreview(dataUrl);
+  //     form.setValue("logo", dataUrl);
+  //   };
+  //   reader.readAsDataURL(file);
 
-    event.target.value = '';
-  };
+  //   event.target.value = '';
+  // };
 
-  const removeImage = (index: number) => {
-    const newPreviews = [...imagePreviews];
-    const newImageData = [...(form.getValues("images") || [])];
+  // const removeImage = (index: number) => {
+  //   const newPreviews = [...imagePreviews];
+  //   const newImageData = [...(form.getValues("images") || [])];
 
-    newPreviews.splice(index, 1);
-    newImageData.splice(index, 1);
+  //   newPreviews.splice(index, 1);
+  //   newImageData.splice(index, 1);
 
-    setImagePreviews(newPreviews);
-    form.setValue("images", newImageData);
-  };
+  //   setImagePreviews(newPreviews);
+  //   form.setValue("images", newImageData);
+  // };
   
-  const removeLogo = () => {
-    setLogoPreview(null);
-    form.setValue("logo", "");
-  }
+  // const removeLogo = () => {
+  //   setLogoPreview(null);
+  //   form.setValue("logo", "");
+  // }
 
   const handleGenerateSuggestions = async () => {
     if (!suggestionInput) {
@@ -197,12 +197,13 @@ export default function ImageGenerationPage() {
     try {
       const imageUrls = await generateImage({
         prompt: values.prompt,
-        images: values.images,
-        logo: values.logo,
-        bannerText: values.bannerText,
+        // images: values.images,
+        // logo: values.logo,
+        // bannerText: values.bannerText,
       });
       setGeneratedImageUrls(imageUrls);
     } catch (error) {
+      console.log("response", error)  
       console.error("Error during image generation:", error);
       const errorMessage =
         error instanceof Error
@@ -310,7 +311,7 @@ export default function ImageGenerationPage() {
                   )}
                 />
 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="bannerText"
                   render={({ field }) => (
@@ -326,9 +327,9 @@ export default function ImageGenerationPage() {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
                 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="logo"
                   render={() => (
@@ -355,9 +356,9 @@ export default function ImageGenerationPage() {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
 
-                {logoPreview && (
+                {/* {logoPreview && (
                   <div className="grid grid-cols-3 gap-2">
                     <div className="relative group">
                       <Image
@@ -378,9 +379,9 @@ export default function ImageGenerationPage() {
                       </Button>
                     </div>
                   </div>
-                )}
+                )} */}
 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="images"
                   render={() => (
@@ -408,9 +409,9 @@ export default function ImageGenerationPage() {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
 
-                {imagePreviews.length > 0 && (
+                {/* {imagePreviews.length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
                     {imagePreviews.map((src, index) => (
                       <div key={index} className="relative group">
@@ -433,7 +434,7 @@ export default function ImageGenerationPage() {
                       </div>
                     ))}
                   </div>
-                )}
+                )} */}
                 
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? (
@@ -503,5 +504,3 @@ export default function ImageGenerationPage() {
     </main>
   );
 }
-
-    
