@@ -21,7 +21,6 @@ export async function generatePromptSuggestions(input: GeneratePromptSuggestions
 }
 
 const promptSuggestionPrompt = ai.definePrompt({
-  name: 'promptSuggestionPrompt',
   model: googleAI('gemini-2.5-flash'),
   input: { schema: GeneratePromptSuggestionsInputSchema },
   output: { schema: z.object({ prompts: z.array(z.string()) }) },
