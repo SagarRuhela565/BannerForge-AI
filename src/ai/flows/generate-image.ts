@@ -36,10 +36,6 @@ const generateImageFlow = ai.defineFlow(
     
     finalPrompt += ` The banner should be visually striking and suitable for social media advertising, branding, event promotion, and communication. The banner should have a clear space for text to be added later. Do not include any text in the image.`;
     
-    if (logo) {
-      finalPrompt += ` Include the attached logo.`;
-    }
-    
     const promptParts: (string | { media: { url: string } })[] = [finalPrompt];
     
     if (logo) {
@@ -54,7 +50,7 @@ const generateImageFlow = ai.defineFlow(
 
     const imagePromises = Array(3).fill(null).map(() => 
       ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        model: 'googleai/imagen-4.0-fast-generate-001',
         prompt: promptParts,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
