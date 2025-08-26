@@ -50,7 +50,6 @@ const generateImageFlow = ai.defineFlow(
 
     const imagePromises = Array(3).fill(null).map(() => 
       ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
         prompt: promptParts,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
