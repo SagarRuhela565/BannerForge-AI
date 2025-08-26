@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
 
 const GeneratePromptSuggestionsInputSchema = z.object({
   bannerText: z.string().describe('The simple text for the banner.'),
@@ -21,6 +22,7 @@ export async function generatePromptSuggestions(input: GeneratePromptSuggestions
 
 const promptSuggestionPrompt = ai.definePrompt({
   name: 'promptSuggestionPrompt',
+  model: googleAI('gemini-2.5-flash'),
   input: { schema: GeneratePromptSuggestionsInputSchema },
   output: { schema: z.object({ prompts: z.array(z.string()) }) },
   prompt: `You are a world-class expert at writing "mega-prompts" for generative AI image models. Your task is to take a user's simple banner text and generate 3 extremely detailed and descriptive prompts that will produce a high-quality, professional banner.
